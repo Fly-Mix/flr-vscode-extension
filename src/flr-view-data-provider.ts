@@ -5,15 +5,17 @@ import * as utils from "./utils";
 import * as yaml from "js-yaml";
 import { ResourceGenerator } from "./resource-generator";
 import * as flrPathMan from "./folder-manager";
+import * as md5 from "md5";
 
 export class FileExplorer {
   private fileExplorer: vscode.TreeView<flrPathMan.Entry>;
   private registeredWatchPaths: string[];
+  private fileMD5: string = "";
 
   constructor(context: vscode.ExtensionContext) {
     const treeDataProvider = new FileSystemProvider(name => {
       // only show flrfile
-      return name === utils.Names.flrfile;
+      return name === utils.Names.pubspec;
     });
     this.fileExplorer = vscode.window.createTreeView(utils.Names.flr, {
       treeDataProvider
@@ -24,9 +26,7 @@ export class FileExplorer {
     utils.registerCommandNice(context, utils.Commands.openFile, resource =>
       this.openResource(resource)
     );
-    utils.registerCommandNice(context, utils.Commands.refresh, _ =>
-      this.refresh()
-    );
+
     utils.registerCommandNice(context, utils.Commands.stopMonitor, resource => {
       this.toggleMonitor(false, resource.uri);
     });
@@ -43,7 +43,7 @@ export class FileExplorer {
 
   private refresh() {
     const treeDataProvider = new FileSystemProvider(name => {
-      return name === utils.Names.flrfile;
+      return name === utils.Names.pubspec;
     });
     this.fileExplorer = vscode.window.createTreeView(utils.Names.flr, {
       treeDataProvider
@@ -53,21 +53,30 @@ export class FileExplorer {
   /// watching current workspace file change to reload FLR
   private startWatching() {
     this.registeredWatchPaths = new Array();
-    let uri = vscode.workspace.workspaceFolders![0].uri;
-    let flrUri = vscode.Uri.file(path.join(uri.fsPath, utils.Names.flrfile));
+    let raw = utils.firstWorkSpace();
+    if (raw === undefined) {
+      return;
+    }
+    let uri = raw!;
+    let flrUri = vscode.Uri.file(path.join(uri.fsPath, utils.Names.pubspec));
     const watcher = fs.watch(
       uri.fsPath,
       { recursive: true },
       async (event: string, filename: string | Buffer) => {
-        if (filename === utils.Names.flrfile) {
+        if (filename === utils.Names.pubspec) {
           // if isdelete, stop watcher
           // if is add, start watcher
-          // if change, restart watcher
+          // if change, conditional restart watcher
           if (event === "change") {
-            // update
-            this.toggleMonitor(true, flrUri);
+            // compare md5 before and after, stop looping
+            let fileContents = fs.readFileSync(flrUri.fsPath, "utf8");
+            let currentMD5 = md5(fileContents);
+            if (currentMD5 !== this.fileMD5) {
+              this.fileMD5 = currentMD5;
+              this.toggleMonitor(true, flrUri);
+            }
           } else {
-            flrPathMan.FolderManager.getFlrfile().then(result => {
+            flrPathMan.FolderManager.getPubspec().then(result => {
               this.toggleMonitor(result.length > 0, flrUri);
             });
           }
@@ -84,41 +93,52 @@ export class FileExplorer {
     );
   }
 
+  refreshGeneratedResource() {
+    let raw = utils.firstWorkSpace();
+    if (raw === undefined) {
+      return;
+    }
+    let uri = raw!;
+    let pubspec = path.join(uri.fsPath, utils.Names.pubspec);
+    this.refreshMonitorPath(vscode.Uri.file(pubspec));
+    ResourceGenerator.generateRFile(uri, this.registeredWatchPaths);
+  }
+
   private openResource(resource: vscode.Uri) {
     vscode.window.showTextDocument(resource);
+  }
+
+  private refreshMonitorPath(resource: vscode.Uri) {
+    // enabled
+    // read pubspec.yaml
+    // get folder that needed to be watched
+    // watch change and update pubspec.yaml, generate R.dart
+    try {
+      let fileContents = fs.readFileSync(resource.fsPath, "utf8");
+      let data = yaml.safeLoad(fileContents);
+      let flr = data["flr"];
+      let assets = flr["assets"];
+      if (assets !== null && assets !== undefined) {
+        const vals = Object.values<string>(assets);
+        this.registeredWatchPaths = this.registeredWatchPaths.concat(vals);
+      }
+    } catch (e) {
+      vscode.window.showErrorMessage(e);
+    }
   }
 
   toggleMonitor(toValue: boolean, resource: vscode.Uri) {
     utils.switchControl(utils.ControlFlags.isMonitorEnabled, toValue);
 
     if (toValue) {
-      // enabled
-      // read Flrfile.yaml
-      // get folder that needed to be watched
-      // watch change and update pubspec.yaml, generate R.dart
-      try {
-        let fileContents = fs.readFileSync(resource.path, "utf8");
-        let data = yaml.safeLoad(fileContents);
-        let assets = data["assets"];
-        let images = assets["images"];
-        let texts = assets["texts"];
-        if (images !== null) {
-          const vals = Object.values<string>(images);
-          this.registeredWatchPaths = this.registeredWatchPaths.concat(vals);
-        }
-        if (texts !== null) {
-          const vals = Object.values<string>(texts);
-          this.registeredWatchPaths = this.registeredWatchPaths.concat(vals);
-        }
-      } catch (e) {
-        vscode.window.showErrorMessage(e);
-      }
+      this.refreshMonitorPath(resource);
     } else {
       // disabled
       // stop all watcher
       this.registeredWatchPaths = new Array();
     }
     this.refresh();
+    this.refreshGeneratedResource();
   }
 }
 
@@ -146,7 +166,7 @@ export class FileSystemProvider
       folder => folder.uri.scheme === "file"
     )[0];
     if (workspaceFolder) {
-      let ret = await flrPathMan.FolderManager.getFlrfile();
+      let ret = await flrPathMan.FolderManager.getPubspec();
       return ret.map(([name, type]) => ({
         uri: vscode.Uri.file(path.join(workspaceFolder.uri.fsPath, name)),
         type

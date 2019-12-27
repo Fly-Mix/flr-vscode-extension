@@ -6,10 +6,12 @@ import * as flrPathMan from "./folder-manager";
 import * as utils from "./utils";
 
 export class ResourceGenerator {
+  static namePool: string[] = new Array();
   static async generateRFile(uri: vscode.Uri, paths: string[]) {
     // read register folders content
     // update pubspec.yaml assets
     // generate R.generated.dart
+    this.namePool = new Array();
     var total: string[] = new Array();
     for (const index in paths) {
       let rPath = paths[index];
@@ -35,9 +37,20 @@ export class ResourceGenerator {
           let r = await ResourceGenerator.generateResourceIn(uri);
           total = total.concat(r);
         } else {
-          let hasIllegalChar = rPath.includes(" ") || rPath.includes("#");
+          // ignore resource that contains ` `、`#`、`^`、`%` chars
+          let basename = this.basenameOf(rPath);
+          let finalName = basename.replace(
+            /[^0-9A-Za-z_\+\-\.\\s$·@!¥￥&]/g,
+            "_"
+          );
+          let hasIllegalChar = finalName !== basename;
           if (hasIllegalChar === false) {
             total.push(path.join(folder.fsPath, rPath));
+          } else {
+            console.log(`finalName: ${finalName}, origin name: ${basename}`);
+            vscode.window.showInformationMessage(
+              `Illegal Resource Name: ->|${rPath}|<-, Just Allowed Using Chars Within 0-9, A-Z, a-z, +-_$·@!¥&`
+            );
           }
         }
       }
@@ -60,15 +73,22 @@ export class ResourceGenerator {
           let name = data["name"] as string;
           packageName = name;
           // normalize path
-          let relativePath = p.split(root)[1];
+          let relativePath = p.split(path.join(root, "lib"))[1];
           let packagesPath = path.join("packages", name);
           let resourcesPath = path.join(packagesPath, relativePath);
 
           return utils.trimScalesPathOf(resourcesPath);
         });
         let uniValue = utils.distictArray(mapedAssets);
-        data["assets"] = uniValue;
-        fs.writeFileSync(pubspec, yaml.safeDump(data));
+        var flutter = data["flutter"] ?? new Map();
+        if (uniValue.length !== 0) {
+          flutter["assets"] = uniValue;
+          data["flutter"] = flutter;
+          fs.writeFileSync(
+            pubspec,
+            yaml.safeDump(JSON.parse(JSON.stringify(data))).replace(/'/g, '"')
+          );
+        }
       } catch (e) {
         vscode.window.showErrorMessage(e);
       }
@@ -88,24 +108,189 @@ export class ResourceGenerator {
       (n, i) => filterAssets.indexOf(n) === i
     );
 
+    let uniValue = utils.distictArray(uniAssets);
+    for (const index in uniValue) {
+      let p = uniValue[index];
+      var components = p.split("/");
+      if (p.includes("\\\\")) {
+        components = p.split("\\");
+      }
+      let filename = components.pop()!;
+      let rawName = this.basenameOf(filename, true);
+      if (filename.endsWith(".svg") === false) {
+        if (this.namePool.includes(rawName) === false) {
+          this.namePool.push(rawName);
+        }
+      }
+    }
     let workspace = utils.firstWorkSpace();
     let root = workspace?.fsPath;
     if (root) {
       // cerate Flrfile.yaml
       try {
-        let file = path.join(root, utils.Names.generatedFileName);
+        let file2 = path.join(root, "lib");
+        let file = path.join(file2, utils.Names.generatedFileName);
         var content = utils.Template.resourceFileHeader(name);
+
+        let imagesAssetResourcesBlock = this.generateImagesAssetResourcesBlock(
+          uniAssets,
+          root
+        );
+        content += imagesAssetResourcesBlock;
+        let svgAssetResourcesBlock = this.generateSVGAssetResourcesBlock(
+          uniAssets,
+          root,
+          name
+        );
+        content += svgAssetResourcesBlock;
+        let textAssetResourcesBlock = this.generateTextAssetResourcesBlock(
+          uniAssets,
+          root,
+          name
+        );
+        content += textAssetResourcesBlock;
+
         let imagesBlock = this.generateImagesBlock(uniAssets, root);
         content += imagesBlock;
         let svgBlock = this.generateSVGBlock(uniAssets, root, name);
         content += svgBlock;
         let textBlock = this.generateTextBlock(uniAssets, root, name);
         content += textBlock;
+
         fs.writeFileSync(file, content);
       } catch (e) {}
     }
   }
 
+  private static generateImagesAssetResourcesBlock(
+    assets: string[],
+    rootPath: string
+  ): string {
+    let header = utils.Template.imagesAssetResourceBlockHeader();
+    let template: (path: string, escapePath: string, name: string) => string = (
+      path,
+      escapePath,
+      name
+    ) => {
+      return utils.Template.imageAssetResourceOf(path, escapePath, name);
+    };
+    let block = this.generateAssetResourcesBlock(
+      assets,
+      rootPath,
+      header,
+      utils.SupportedFormat.images,
+      false,
+      template
+    );
+
+    return block;
+  }
+
+  private static generateSVGAssetResourcesBlock(
+    assets: string[],
+    rootPath: string,
+    packageName: string
+  ): string {
+    let header = utils.Template.svgAssetResourceBlockHeader();
+    let template: (path: string, escapePath: string, name: string) => string = (
+      path,
+      escapePath,
+      name
+    ) => {
+      return utils.Template.svgAssetResourceOf(path, escapePath, name);
+    };
+    let block = this.generateAssetResourcesBlock(
+      assets,
+      rootPath,
+      header,
+      utils.SupportedFormat.svg,
+      false,
+      template
+    );
+    return block;
+  }
+
+  private static generateTextAssetResourcesBlock(
+    assets: string[],
+    rootPath: string,
+    packageName: string
+  ): string {
+    let header = utils.Template.textAssetResourceBlockHeader();
+    let template: (path: string, escapePath: string, name: string) => string = (
+      path,
+      escapePath,
+      name
+    ) => {
+      return utils.Template.textAssetResourceOf(path, escapePath, name);
+    };
+    let block = this.generateAssetResourcesBlock(
+      assets,
+      rootPath,
+      header,
+      utils.SupportedFormat.txt,
+      true,
+      template
+    );
+    return block;
+  }
+
+  private static generateAssetResourcesBlock(
+    assets: string[],
+    rootPath: string,
+    header: string,
+    supportedFormat: string[],
+    isText: boolean = false,
+    itemTemplate: (path: string, escapePath: string, name: string) => string
+  ): string {
+    let filterAssets = assets.filter(
+      (val, _) =>
+        supportedFormat.filter((fmt, _) => val.endsWith(fmt)).length > 0
+    );
+    let uniValue = utils.distictArray(filterAssets);
+    var blockContent = "";
+    for (const index in uniValue) {
+      let rp = uniValue[index];
+      let p = rp.split(path.join(rootPath, "lib"))[1];
+      var components = p.split("/");
+      if (rootPath.includes("\\\\")) {
+        components = p.split("\\");
+      }
+      let filename = components.pop()!;
+      let rawName = this.basenameOf(filename, isText === false);
+      if (isText === false) {
+        if (filename.endsWith(".svg") === false) {
+          if (this.namePool.includes(rawName)) {
+            if (filename.endsWith(".png") === false) {
+              rawName = this.basenameOf(filename, false);
+            }
+          }
+        }
+      }
+      let varname =
+        rawName.charAt(0).toLowerCase() +
+        rawName.substr(1).replace(/[^0-9A-Za-z_\\s$]/g, "_");
+      var trimed = utils.trimScalesPathOf(varname);
+      let firstChar = trimed.substr(0, 1);
+      let replacedFirstChar = firstChar.replace(/[0-9_$]/, "a");
+      if (replacedFirstChar !== firstChar) {
+        trimed = replacedFirstChar + trimed;
+      }
+      let escapePath = p.replace(/\$/g, "\\$");
+      blockContent += itemTemplate(p, escapePath, trimed);
+      if (index !== (uniValue.length - 1).toString()) {
+        blockContent += "\n";
+      }
+    }
+    var block = header;
+    block += blockContent;
+    if (blockContent.length !== 0) {
+      block += "\n";
+    }
+    block += "}\n";
+    return block;
+  }
+
+  // MARK: -
   private static generateImagesBlock(
     assets: string[],
     rootPath: string
@@ -119,6 +304,7 @@ export class ResourceGenerator {
       rootPath,
       header,
       utils.SupportedFormat.images,
+      false,
       template
     );
 
@@ -132,13 +318,14 @@ export class ResourceGenerator {
   ): string {
     let header = utils.Template.svgBlockHeader();
     let template: (path: string, name: string) => string = (path, name) => {
-      return utils.Template.svgAssetOf(path, name, packageName);
+      return utils.Template.svgAssetOf(path, name);
     };
     let block = this.generateBlock(
       assets,
       rootPath,
       header,
       utils.SupportedFormat.svg,
+      false,
       template
     );
     return block;
@@ -151,13 +338,14 @@ export class ResourceGenerator {
   ): string {
     let header = utils.Template.textBlockHeader();
     let template: (path: string, name: string) => string = (path, name) => {
-      return utils.Template.textAssetOf(path, name, packageName);
+      return utils.Template.textAssetOf(path, name);
     };
     let block = this.generateBlock(
       assets,
       rootPath,
       header,
       utils.SupportedFormat.txt,
+      true,
       template
     );
     return block;
@@ -168,6 +356,7 @@ export class ResourceGenerator {
     rootPath: string,
     header: string,
     supportedFormat: string[],
+    isText: boolean,
     itemTemplate: (path: string, name: string) => string
   ): string {
     let filterAssets = assets.filter(
@@ -179,16 +368,30 @@ export class ResourceGenerator {
     for (const index in uniValue) {
       let rp = uniValue[index];
       let p = rp.split(path.join(rootPath, "lib"))[1];
-      let components = p.split("/");
-
-      /// in case of a.b.c.png
-      let fileNames = components.pop()!.split(".");
-      fileNames.pop();
-
-      let rawName = fileNames.join("_");
-      let fileName = rawName.toLowerCase().replace(/[^0-9A-Za-z_$]/, "_");
-      let trimed = utils.trimScalesPathOf(fileName);
-      components.push(trimed);
+      var components = p.split("/");
+      if (rootPath.includes("\\\\")) {
+        components = p.split("\\");
+      }
+      let filename = components.pop()!;
+      var rawName = this.basenameOf(filename, isText === false);
+      if (isText === false) {
+        if (filename.endsWith(".svg") === false) {
+          if (this.namePool.includes(rawName)) {
+            if (filename.endsWith(".png") === false) {
+              rawName = this.basenameOf(filename, false);
+            }
+          }
+        }
+      }
+      let varname =
+        rawName.charAt(0).toLowerCase() +
+        rawName.substr(1).replace(/[^0-9A-Za-z_\\s$]/g, "_");
+      var trimed = utils.trimScalesPathOf(varname);
+      let firstChar = trimed.substr(0, 1);
+      let replacedFirstChar = firstChar.replace(/[0-9_$]/, "a");
+      if (replacedFirstChar !== firstChar) {
+        trimed = replacedFirstChar + trimed;
+      }
       blockContent += itemTemplate(p, trimed);
       if (index !== (uniValue.length - 1).toString()) {
         blockContent += "\n";
@@ -196,7 +399,23 @@ export class ResourceGenerator {
     }
     var block = header;
     block += blockContent;
-    block += "\n}\n";
+    if (blockContent.length !== 0) {
+      block += "\n";
+    }
+    block += "}\n";
     return block;
+  }
+
+  private static basenameOf(
+    path: string,
+    removeExtension: boolean = true
+  ): string {
+    let fileNames = path.split(".");
+    if (removeExtension) {
+      fileNames.pop();
+    }
+
+    let rawName = fileNames.join("_");
+    return rawName;
   }
 }

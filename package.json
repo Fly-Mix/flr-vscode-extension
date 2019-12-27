@@ -1,8 +1,10 @@
 {
+  "publisher": "LincolnLaw",
   "name": "flr",
   "displayName": "FLR",
   "description": "Flutter Resources Manager",
-  "version": "0.0.1",
+  "version": "0.0.6",
+  "repository": "https://github.com/Fly-Mix/flr-vscode-extension",
   "engines": {
     "vscode": "^1.41.0"
   },
@@ -36,14 +38,23 @@
         "title": "Start Monitor"
       },
       {
-        "command": "flr.refresh",
-        "title": "Refresh File"
+        "command": "flr.regenerated",
+        "title": "Re Generate r.g.dart",
+        "icon": {
+          "light": "resources/light/refresh.png",
+          "dark": "resources/dark/refresh.svg"
+        }
       }
     ],
     "menus": {
       "view/title": [
         {
           "command": "flr.init",
+          "when": "view == flr",
+          "group": "navigation"
+        },
+        {
+          "command": "flr.regenerated",
           "when": "view == flr",
           "group": "navigation"
         }
@@ -78,20 +89,20 @@
     "pretest": "npm run compile",
     "test": "node ./out/test/runTest.js"
   },
-  "devDependencies": {
-    "@types/glob": "^7.1.1",
+  "devDependencies": {},
+  "dependencies": {
+    "@types/js-yaml": "^3.12.1",
+    "@types/md5": "^2.1.33",
+    "@types/mkdirp": "^0.5.2",
     "@types/mocha": "^5.2.7",
     "@types/node": "^12.11.7",
-    "@types/vscode": "^1.41.0",
-    "@types/mkdirp": "^0.5.2",
     "@types/rimraf": "^2.0.2",
+    "@types/vscode": "^1.41.0",
+    "md5": "^2.2.1",
     "glob": "^7.1.5",
     "mocha": "^6.2.2",
-    "typescript": "^3.6.4",
     "tslint": "^5.20.0",
+    "typescript": "^3.6.4",
     "vscode-test": "^1.2.2"
-  },
-  "dependencies": {
-    "@types/js-yaml": "^3.12.1"
   }
 }

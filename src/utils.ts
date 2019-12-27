@@ -1,18 +1,22 @@
 import * as vscode from "vscode";
 
 export enum Names {
-  generatedFileName = "r_generated.dart",
+  generatedFileName = "r.g.dart",
   flr = "flr",
-  flrfile = "Flrfile.yaml",
   pubspec = "pubspec.yaml"
 }
 
 export enum Commands {
   init = "flr.init",
   openFile = "flr.openFile",
-  refresh = "flr.refresh",
+  refresh = "flr.regenerated",
   startMonotor = "flr.startMonitor",
   stopMonitor = "flr.stopMonitor"
+}
+
+export enum Regex {
+  filename = "[^0-9A-Za-z_\\+\\-\\.$·@!¥&]",
+  varname = "[^0-9A-Za-z_\\s$]"
 }
 
 export enum ControlFlags {
@@ -92,40 +96,127 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_svg/flutter_svg.dart';
 // ignore: unused_import
 import 'package:r_dart_library/asset_svg.dart';
+import 'package:path/path.dart' as path;
 
 /// This \`R\` class is generated and contains references to static resources.
 class R {
   /// package name: moxibustion_instrument
   static const package = "${packageName}";
-}\n`;
+
+  /// This \`R.image\` struct is generated, and contains static references to static non-svg type image asset resources.
+  static const image = _R_Image();
+
+  /// This \`R.svg\` struct is generated, and contains static references to static svg type image asset resources.
+  static const svg = _R_Svg();
+
+  /// This \`R.text\` struct is generated, and contains static references to static text asset resources.
+  static const text = _R_Text();
+}
+
+/// Asset resource’s metadata class.
+class AssetResource {
+  /// Creates an object to hold the asset resource’s metadata.
+  /// For example:
+  /// - asset: assets/images/example.png
+  /// - packageName：flutter_demo
+  ///
+  const AssetResource(this.assetName, {this.packageName}) : assert(assetName != null);
+
+  /// The name of the main asset from the set of asset resources to choose from.
+  final String assetName;
+
+  /// The name of the package from which the asset resource is included.
+  final String packageName;
+
+  /// The name used to generate the key to obtain the asset resource. For local assets
+  /// this is [assetName], and for assets from packages the [assetName] is
+  /// prefixed 'packages/<package_name>/'.
+  String get keyName => packageName == null ? assetName : 'packages/$packageName/$assetName';
+
+  /// The file basename of the asset resource.
+  String get fileBasename {
+    final basename = path.basename(assetName);
+    return basename;
   }
 
-  static textAssetOf(
+  /// The no extension file basename of the asset resource.
+  String get fileBasenameNoExtension {
+    final basenameWithoutExtension = path.basenameWithoutExtension(assetName);
+    return basenameWithoutExtension;
+  }
+
+  /// The file extension name of the asset resource.
+  String get fileExtname {
+    final extension = path.extension(assetName);
+    return extension;
+  }
+
+  /// The directory path name of the asset resource.
+  String get fileDirname {
+    var dirname = assetName;
+    if (packageName != null) {
+      final packageStr = "packages/$packageName/";
+      dirname = dirname.replaceAll(packageStr, "");
+    }
+    final filenameStr = "$fileBasename/";
+    dirname = dirname.replaceAll(filenameStr, "");
+    return dirname;
+  }
+}
+`;
+  }
+
+  static textAssetResourceOf(
     path: string,
-    filename: string,
-    packageName: string
+    escapePath: string,
+    filename: string
   ): string {
+    let finalPath = this.trimFirstSlashOf(escapePath);
     return this.assetGenerator(
       path,
-      `static Future<String> ${filename}() {
-    var assetFullPath = "packages/${packageName}${path}";
-    var str = rootBundle.loadString(assetFullPath);
+      `final ${filename} = const AssetResource("${finalPath}", packageName: R.package);`
+    );
+  }
+
+  static svgAssetResourceOf(
+    path: string,
+    escapePath: string,
+    filename: string
+  ): string {
+    let finalPath = this.trimFirstSlashOf(escapePath);
+    return this.assetGenerator(
+      path,
+      `final ${filename} = const AssetResource("${finalPath}", packageName: R.package);`
+    );
+  }
+
+  static imageAssetResourceOf(
+    path: string,
+    escapePath: string,
+    filename: string
+  ): string {
+    let finalPath = this.trimFirstSlashOf(escapePath);
+    return this.assetGenerator(
+      path,
+      `final ${filename} = const AssetResource("${finalPath}", packageName: R.package);`
+    );
+  }
+
+  static textAssetOf(path: string, filename: string): string {
+    return this.assetGenerator(
+      path,
+      `Future<String> ${filename}() {
+    final str = rootBundle.loadString(asset.${filename}.keyName);
     return str;
   }`
     );
   }
 
-  static svgAssetOf(
-    path: string,
-    filename: string,
-    packageName: string
-  ): string {
+  static svgAssetOf(path: string, filename: string): string {
     return this.assetGenerator(
       path,
-      `static AssetSvg ${filename}({@required double w, @required double h}) {
-    assert(w != null && h != null);
-    final assetFullPath = "packages/${packageName}${path}";
-    final imageProvider = AssetSvg(assetFullPath, width: w, height: h);
+      `AssetSvg ${filename}({@required double width, @required double height}) {
+    final imageProvider = AssetSvg(asset.${filename}.keyName, width: width, height: height);
     return imageProvider;
   }`
     );
@@ -134,7 +225,9 @@ class R {
   static imageAssetOf(path: string, filename: string): string {
     return this.assetGenerator(
       path,
-      `static const ${filename} = AssetImage("${path}", package: R.package);`
+      `AssetImage ${filename}() {
+    return AssetImage(asset.${filename}.keyName);
+  }`
     );
   }
 
@@ -145,20 +238,51 @@ class R {
   }
 
   static textBlockHeader(): string {
-    return this.resourceBlockHeader("R.Json", "R_Text");
+    return this.resourceBlockHeader("_R_Text");
   }
 
   static imagesBlockHeader(): string {
-    return this.resourceBlockHeader("R.Image", "R_Image");
+    return this.resourceBlockHeader("_R_Image");
   }
 
   static svgBlockHeader(): string {
-    return this.resourceBlockHeader("R.SVG", "R_SVG");
+    return this.resourceBlockHeader("_R_Svg");
   }
 
-  private static resourceBlockHeader(origin: string, sulution: string): string {
-    return `\n/// Because dart does not support nested class, so use class \`${sulution}\` to replace nested class \`${origin}\`
+  private static resourceBlockHeader(sulution: string): string {
+    return `\n/// This \`${sulution}\` class is generated and contains references to static non-svg type image asset resources.
 // ignore: camel_case_types
-class ${sulution} {`;
+class ${sulution} {
+  const ${sulution}();
+
+  final asset = const ${sulution}_AssetResource();
+`;
+  }
+
+  static textAssetResourceBlockHeader(): string {
+    return this.assetResourceBlockHeader("_R_Text");
+  }
+
+  static imagesAssetResourceBlockHeader(): string {
+    return this.assetResourceBlockHeader("_R_Image");
+  }
+
+  static svgAssetResourceBlockHeader(): string {
+    return this.assetResourceBlockHeader("_R_Svg");
+  }
+
+  private static assetResourceBlockHeader(sulution: string): string {
+    return `\n// ignore: camel_case_types
+class ${sulution}_AssetResource {
+  const ${sulution}_AssetResource();
+`;
+  }
+
+  private static trimFirstSlashOf(path: string): string {
+    var finalPath = path;
+    if (finalPath.startsWith("/") === true) {
+      finalPath = path.substring(1);
+    }
+    return finalPath;
   }
 }

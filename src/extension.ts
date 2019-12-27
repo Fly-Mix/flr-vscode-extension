@@ -5,25 +5,41 @@ import { FileExplorer } from "./flr-view-data-provider";
 import * as utils from "./utils";
 import * as yaml from "js-yaml";
 
+var exec = require("child_process").exec;
+async function execute(command: string): Promise<string> {
+  return new Promise<string>((fulfill, reject) => {
+    exec(command, function(err: any, stdout: string, _: any) {
+      if (err !== null) {
+        reject(err);
+      } else {
+        fulfill(stdout);
+      }
+    });
+  });
+}
+
+let version = "0.2.0";
+
 export function activate(context: vscode.ExtensionContext) {
   var fp: FileExplorer | undefined;
 
-  let filename = utils.Names.flrfile;
+  let filename = utils.Names.pubspec;
 
   function checkFlrFile(): Promise<boolean> {
     return new Promise<boolean>((success, failure) => {
       let folders = vscode.workspace.workspaceFolders;
       if (folders) {
         let root = folders[0].uri.fsPath;
-        fs.readdir(root, (_, files) => {
-          const result = files.filter(file => file === filename);
-          let hasFlr = result.length > 0;
-          if (hasFlr) {
-            let flrFile = path.join(root, result[0]);
-            fp?.toggleMonitor(true, vscode.Uri.file(flrFile));
+        let pubspec = path.join(root, utils.Names.pubspec);
+        let fileContents = fs.readFileSync(pubspec, "utf8");
+        let data = yaml.safeLoad(fileContents);
+        let flr = data["flr"];
+        if (flr !== undefined) {
+          let assets = flr["assets"] as [string];
+          if (assets !== undefined && assets.length > 0) {
+            fp?.toggleMonitor(true, vscode.Uri.file(pubspec));
           }
-          success(hasFlr);
-        });
+        }
       } else {
         success(false);
       }
@@ -31,45 +47,83 @@ export function activate(context: vscode.ExtensionContext) {
   }
   // make FLR show in Explorer Section
   utils.switchControl(utils.ControlFlags.isPubspecYamlExist, true);
+  utils.registerCommandNice(context, utils.Commands.refresh, () => {
+    fp?.refreshGeneratedResource();
+  });
+  utils.registerCommandNice(context, utils.Commands.init, async () => {
+    let workSpace = utils.firstWorkSpace();
+    if (workSpace) {
+      // cerate Flrfile.yaml
+      let root = workSpace.fsPath;
 
-  utils.registerCommandNice(context, utils.Commands.init, () => {
-    checkFlrFile().then(result => {
-      if (result === true) {
-        vscode.window.showInformationMessage("Already has Flrfile.yaml file");
-        return;
-      }
-      let workSpace = utils.firstWorkSpace();
-      if (workSpace) {
-        // cerate Flrfile.yaml
-        let root = workSpace.fsPath;
-        let storePath = path.join(root, filename);
-        fs.writeFile(storePath, utils.Template.flrfileTemplate, () => {
-          fp?.toggleMonitor(true, vscode.Uri.file(storePath));
-          vscode.window.showInformationMessage(
-            `Create Flrfile.yaml at ${storePath}`
-          );
-        });
+      // add r_dart_library dependency for pubspec
+      try {
+        let pubspec = path.join(root, utils.Names.pubspec);
+        let fileContents = fs.readFileSync(pubspec, "utf8");
+        var data = yaml.safeLoad(fileContents);
 
-        // add r_dart_library dependency for pubspec
-        try {
-          let pubspec = path.join(root, utils.Names.pubspec);
-          let fileContents = fs.readFileSync(pubspec, "utf8");
-          var data = yaml.safeLoad(fileContents);
-          var dependencies = data["dependencies"];
-          var git: { [value: string]: string } = {};
-          // TODO: update version conditional via environment sdk version
-          git["url"] = "https://github.com/YK-Unit/r_dart_library.git";
-          git["ref"] = "develop";
-          var r_dart_library: { [value: string]: Object } = {};
-          r_dart_library["git"] = git;
-          dependencies["r_dart_library"] = r_dart_library;
-          data["dependencies"] = dependencies;
-          fs.writeFileSync(pubspec, yaml.safeDump(data));
-        } catch (e) {
-          vscode.window.showErrorMessage(e);
+        // let flutter = data["flutter"];
+        // if (flutter === undefined || flutter === null) {
+        //   data["flutter"] = new Map();
+        // }
+
+        // check if has already init
+        // check version
+        var flr = data["flr"] ?? new Map();
+        let ver = flr["version"] as string;
+        if (ver !== undefined) {
+          if (ver !== version) {
+            vscode.window.showInformationMessage(
+              `Already had version: ${ver}, flr current version: ${version}`
+            );
+            return;
+          } else {
+            return;
+          }
         }
-      }
-    });
+        let assets = flr["assets"] as [string];
+        if (assets === undefined) {
+          flr["assets"] = ["lib/assets"];
+        }
+
+        flr["version"] = version;
+        data["flr"] = flr;
+
+        var ref = "0.1.0";
+        let str = await execute("flutter --version ");
+        let lines = str.split("\n");
+        if (lines.length > 0) {
+          let flutterVer = lines[0]
+            .split("•")[0]
+            ?.split(" ")[1]
+            ?.split("+")[0]
+            ?.replace(/\./g, "");
+          if (flutterVer !== null) {
+            // version using decoder callback
+            let fixedVer = 11015; // v1.10.15
+            if (parseInt(flutterVer) >= fixedVer) {
+              ref = "develop";
+            }
+          }
+        }
+
+        var dependencies = data["dependencies"];
+        let git = {
+          url: "https://github.com/YK-Unit/r_dart_library.git",
+          ref: ref
+        };
+
+        // TODO: update version conditional via environment sdk version
+
+        let r_dart_library = {
+          git: git
+        };
+        dependencies["r_dart_library"] = r_dart_library;
+        data["dependencies"] = dependencies;
+        let content = yaml.safeDump(JSON.parse(JSON.stringify(data)));
+        fs.writeFileSync(pubspec, content);
+      } catch (_) {}
+    }
   });
   fp = new FileExplorer(context);
   checkFlrFile();

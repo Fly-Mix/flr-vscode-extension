@@ -7,7 +7,7 @@ import * as utils from "./utils";
 
 export class FolderManager {
   // MARK: Helper
-  static async getFlrfile(): Promise<[string, vscode.FileType][]> {
+  static async getPubspec(): Promise<[string, vscode.FileType][]> {
     const workspaceFolder = vscode.workspace.workspaceFolders?.filter(
       folder => folder.uri.scheme === "file"
     )[0];
@@ -20,7 +20,7 @@ export class FolderManager {
         return a[1] === vscode.FileType.Directory ? -1 : 1;
       });
       let ret = children.filter(([name, _]) => {
-        return name.toLowerCase() === utils.Names.flrfile.toLowerCase();
+        return name.toLowerCase() === utils.Names.pubspec.toLowerCase();
       });
       return Promise.resolve(ret);
     } else {
