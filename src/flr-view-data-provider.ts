@@ -67,14 +67,17 @@ export class FileExplorer {
           // if isdelete, stop watcher
           // if is add, start watcher
           // if change, conditional restart watcher
-          if (event === "change") {
-            // compare md5 before and after, stop looping
+          try {
             let fileContents = fs.readFileSync(flrUri.fsPath, "utf8");
             let currentMD5 = md5(fileContents);
-            if (currentMD5 !== this.fileMD5) {
-              this.fileMD5 = currentMD5;
-              this.toggleMonitor(true, flrUri);
+            if (currentMD5 === this.fileMD5) {
+              return;
             }
+            this.fileMD5 = currentMD5;
+          } catch (_) {}
+          if (event === "change") {
+            // compare md5 before and after, stop looping
+            this.toggleMonitor(true, flrUri);
           } else {
             flrPathMan.FolderManager.getPubspec().then(result => {
               this.toggleMonitor(result.length > 0, flrUri);

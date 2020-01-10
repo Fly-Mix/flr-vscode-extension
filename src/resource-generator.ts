@@ -7,11 +7,13 @@ import * as utils from "./utils";
 
 export class ResourceGenerator {
   static namePool: string[] = new Array();
+  static errorTips: string[] = new Array();
   static async generateRFile(uri: vscode.Uri, paths: string[]) {
     // read register folders content
     // update pubspec.yaml assets
     // generate R.generated.dart
     this.namePool = new Array();
+    this.errorTips = new Array();
     var total: string[] = new Array();
     for (const index in paths) {
       let rPath = paths[index];
@@ -39,18 +41,16 @@ export class ResourceGenerator {
         } else {
           // ignore resource that contains ` `、`#`、`^`、`%` chars
           let basename = this.basenameOf(rPath);
-          let finalName = basename.replace(
-            /[^0-9A-Za-z_\+\-\.\\s$·@!¥￥&]/g,
-            "_"
-          );
+          let finalName = basename.replace(/[^0-9A-Za-z_\+\-\.$·@!¥￥&]/g, "_");
           let hasIllegalChar = finalName !== basename;
           if (hasIllegalChar === false) {
             total.push(path.join(folder.fsPath, rPath));
           } else {
-            console.log(`finalName: ${finalName}, origin name: ${basename}`);
-            vscode.window.showInformationMessage(
-              `Illegal Resource Name: ->|${rPath}|<-, Just Allowed Using Chars Within 0-9, A-Z, a-z, +-_$·@!¥&`
-            );
+            let tips = `Illegal Resource Name: ->|${rPath}|<-, Just Allowed Using Chars Within 0-9, A-Z, a-z, +-_$·@!¥&`;
+            if (this.errorTips.includes(tips) === false) {
+              this.errorTips.push(tips);
+              vscode.window.showInformationMessage(tips);
+            }
           }
         }
       }
