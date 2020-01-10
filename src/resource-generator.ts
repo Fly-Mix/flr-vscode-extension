@@ -249,34 +249,9 @@ export class ResourceGenerator {
     let uniValue = utils.distictArray(filterAssets);
     var blockContent = "";
     for (const index in uniValue) {
-      let rp = uniValue[index];
-      let p = rp.split(path.join(rootPath, "lib"))[1];
-      var components = p.split("/");
-      if (rootPath.includes("\\\\")) {
-        components = p.split("\\");
-      }
-      let filename = components.pop()!;
-      let rawName = this.basenameOf(filename, isText === false);
-      if (isText === false) {
-        if (filename.endsWith(".svg") === false) {
-          if (this.namePool.includes(rawName)) {
-            if (filename.endsWith(".png") === false) {
-              rawName = this.basenameOf(filename, false);
-            }
-          }
-        }
-      }
-      let varname =
-        rawName.charAt(0).toLowerCase() +
-        rawName.substr(1).replace(/[^0-9A-Za-z_\\s$]/g, "_");
-      var trimed = utils.trimScalesPathOf(varname);
-      let firstChar = trimed.substr(0, 1);
-      let replacedFirstChar = firstChar.replace(/[0-9_$]/, "a");
-      if (replacedFirstChar !== firstChar) {
-        trimed = replacedFirstChar + trimed;
-      }
-      let escapePath = p.replace(/\$/g, "\\$");
-      blockContent += itemTemplate(p, escapePath, trimed);
+      let info = this.nameProcesser(uniValue[index], rootPath, isText);
+      let escapePath = info.filepath.replace(/\$/g, "\\$");
+      blockContent += itemTemplate(info.filepath, escapePath, info.varname);
       if (index !== (uniValue.length - 1).toString()) {
         blockContent += "\n";
       }
@@ -366,33 +341,8 @@ export class ResourceGenerator {
     let uniValue = utils.distictArray(filterAssets);
     var blockContent = "";
     for (const index in uniValue) {
-      let rp = uniValue[index];
-      let p = rp.split(path.join(rootPath, "lib"))[1];
-      var components = p.split("/");
-      if (rootPath.includes("\\\\")) {
-        components = p.split("\\");
-      }
-      let filename = components.pop()!;
-      var rawName = this.basenameOf(filename, isText === false);
-      if (isText === false) {
-        if (filename.endsWith(".svg") === false) {
-          if (this.namePool.includes(rawName)) {
-            if (filename.endsWith(".png") === false) {
-              rawName = this.basenameOf(filename, false);
-            }
-          }
-        }
-      }
-      let varname =
-        rawName.charAt(0).toLowerCase() +
-        rawName.substr(1).replace(/[^0-9A-Za-z_\\s$]/g, "_");
-      var trimed = utils.trimScalesPathOf(varname);
-      let firstChar = trimed.substr(0, 1);
-      let replacedFirstChar = firstChar.replace(/[0-9_$]/, "a");
-      if (replacedFirstChar !== firstChar) {
-        trimed = replacedFirstChar + trimed;
-      }
-      blockContent += itemTemplate(p, trimed);
+      let info = this.nameProcesser(uniValue[index], rootPath, isText);
+      blockContent += itemTemplate(info.filepath, info.varname);
       if (index !== (uniValue.length - 1).toString()) {
         blockContent += "\n";
       }
@@ -418,4 +368,47 @@ export class ResourceGenerator {
     let rawName = fileNames.join("_");
     return rawName;
   }
+
+  private static nameProcesser(
+    resourcePath: string,
+    rootPath: string,
+    isText: boolean
+  ): PathInfo {
+    let rp = resourcePath;
+    let p = rp.split(path.join(rootPath, "lib"))[1];
+    var components = p.split("/");
+    if (rootPath.includes("\\\\")) {
+      components = p.split("\\");
+    }
+    let filename = components.pop()!;
+    var rawName = this.basenameOf(filename, isText === false);
+    if (isText === false) {
+      if (filename.endsWith(".svg") === false) {
+        if (this.namePool.includes(rawName)) {
+          if (filename.endsWith(".png") === false) {
+            rawName = this.basenameOf(filename, false);
+          }
+        }
+      }
+    }
+    let varname =
+      rawName.charAt(0).toLowerCase() +
+      rawName.substr(1).replace(/[^0-9A-Za-z_\\s$]/g, "_");
+    var trimed = utils.trimScalesPathOf(varname);
+    let firstChar = trimed.substr(0, 1);
+    let replacedFirstChar = firstChar.replace(/[0-9_$]/, "a");
+    if (replacedFirstChar !== firstChar) {
+      trimed = replacedFirstChar + trimed;
+    }
+    var info = new PathInfo();
+    info.varname = trimed;
+    info.filepath = p;
+    return info;
+  }
+}
+export class PathInfo {
+  varname: string = "";
+  filepath: string = "";
+
+  constructor() {}
 }
