@@ -158,7 +158,10 @@ export class ResourceGenerator {
         content += textBlock;
 
         fs.writeFileSync(file, content);
-      } catch (e) {}
+        utils.execute(`dartfmt -l 100 -w ${file}`);
+      } catch (e) {
+        console.log(e);
+      }
     }
   }
 

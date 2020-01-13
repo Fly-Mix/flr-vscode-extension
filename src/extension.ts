@@ -5,19 +5,6 @@ import { FileExplorer } from "./flr-view-data-provider";
 import * as utils from "./utils";
 import * as yaml from "js-yaml";
 
-var exec = require("child_process").exec;
-async function execute(command: string): Promise<string> {
-  return new Promise<string>((fulfill, reject) => {
-    exec(command, function(err: any, stdout: string, _: any) {
-      if (err !== null) {
-        reject(err);
-      } else {
-        fulfill(stdout);
-      }
-    });
-  });
-}
-
 let version = "0.2.0";
 
 export function activate(context: vscode.ExtensionContext) {
@@ -90,7 +77,7 @@ export function activate(context: vscode.ExtensionContext) {
         data["flr"] = flr;
 
         var ref = "0.1.0";
-        let str = await execute("flutter --version ");
+        let str = await utils.execute("flutter --version");
         let lines = str.split("\n");
         if (lines.length > 0) {
           let flutterVer = lines[0]

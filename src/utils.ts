@@ -1,5 +1,18 @@
 import * as vscode from "vscode";
 
+var exec = require("child_process").exec;
+export async function execute(command: string): Promise<string> {
+  return new Promise<string>((fulfill, reject) => {
+    exec(command, function(err: any, stdout: string, _: any) {
+      if (err !== null) {
+        reject(err);
+      } else {
+        fulfill(stdout);
+      }
+    });
+  });
+}
+
 export enum Names {
   generatedFileName = "r.g.dart",
   flr = "flr",
