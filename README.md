@@ -11,7 +11,7 @@ If you open a folder in `VSCode` and with `pubspec.yaml` in root,
 
 It'll show the `FLR(ASSETS MANGER)` session in `EXPLORER` window
 
-<image src = "usage.jpg" width=300></img>
+<!-- <image src = "usage.jpg" width=300></img> -->
 
 ## 文件名处理规则
 
