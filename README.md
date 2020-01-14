@@ -1,8 +1,17 @@
 # flr README
 
-## 工作原理
+## Installation
 
-自动检查目录下是否有 `pubspec.yaml`（只检查一次，手动创建`pubspec.yaml`后需要 Reload Window）
+- search and install `FLR` in VSCode Extensions Session
+- install `vsix` version from [Release]()
+
+## Usage
+
+If you open a folder in `VSCode` and with `pubspec.yaml` in root,
+
+It'll show the `FLR(ASSETS MANGER)` session in `EXPLORER` window
+
+<image src = "usage.jpg" width=300></img>
 
 ## 文件名处理规则
 

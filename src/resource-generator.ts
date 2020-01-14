@@ -9,6 +9,9 @@ export class ResourceGenerator {
   static namePool: string[] = new Array();
   static errorTips: string[] = new Array();
   static async generateRFile(uri: vscode.Uri, paths: string[]) {
+    if (paths.length === 0) {
+      return;
+    }
     // read register folders content
     // update pubspec.yaml assets
     // generate R.generated.dart
