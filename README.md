@@ -23,3 +23,19 @@ It'll show the `FLR(ASSETS MANGER)` session in `EXPLORER` window
 `Start/Stop Monitor`: enable/disable resource folder monitor. if enabled, will auto refresh `r.g.dart` if resources changed.
 
 <image src = "https://raw.githubusercontent.com/Fly-Mix/Resources/master/FLRVSCodeExtension/usage.jpg" width=300/>
+
+## Demo
+
+```
+# pubspec.yaml
+...
+
+flr:
+  version: 0.2.0
+  assets:
+    - lib/assets/images
+
+...
+```
+
+[more detail](https://github.com/Fly-Mix/flutter_r_demo)
