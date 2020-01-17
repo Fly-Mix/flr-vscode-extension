@@ -16,7 +16,8 @@ export async function execute(command: string): Promise<string> {
 export enum Names {
   generatedFileName = "r.g.dart",
   flr = "flr",
-  pubspec = "pubspec.yaml"
+  pubspec = "pubspec.yaml",
+  settings = "settings.json"
 }
 
 export enum Commands {

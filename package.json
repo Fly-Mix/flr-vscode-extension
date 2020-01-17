@@ -3,7 +3,7 @@
   "name": "flr",
   "displayName": "FLR",
   "description": "Flutter Resources Manager",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "repository": "https://github.com/Fly-Mix/flr-vscode-extension",
   "engines": {
     "vscode": "^1.41.0"

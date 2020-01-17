@@ -4,6 +4,7 @@ import * as fs from "fs";
 import * as yaml from "js-yaml";
 import * as flrPathMan from "./folder-manager";
 import * as utils from "./utils";
+const os = require("os");
 
 export class ResourceGenerator {
   static namePool: string[] = new Array();
@@ -161,7 +162,32 @@ export class ResourceGenerator {
         content += textBlock;
 
         fs.writeFileSync(file, content);
-        utils.execute(`dartfmt -l 100 -w ${file}`);
+
+        /// read line length settings for dart and format
+        let platform = process.platform;
+        var settingFilePath = "";
+        let settingFile = "Code/User/settings.json";
+        /// https://vscode.readthedocs.io/en/latest/getstarted/settings/
+        if (platform === "win32" && process.env.APPDATA !== undefined) {
+          // windows
+          settingFilePath = path.join(process.env.APPDATA, settingFile);
+        } else if (platform === "darwin") {
+          // macOS
+          settingFilePath = `${os.homedir()}/Library/Application Support/${settingFile}`;
+        } else {
+          // linux
+          settingFilePath = `${os.homedir()}/.config/${settingFile}`;
+        }
+
+        let settings = fs.readFileSync(settingFilePath, "utf8");
+        let json = JSON.parse(settings);
+        let ll = json["dart.lineLength"];
+        var lineLength = 80;
+        if (ll !== null && ll !== undefined) {
+          lineLength = parseInt(ll);
+        }
+
+        utils.execute(`flutter format -l ${lineLength} ${file}`);
       } catch (e) {
         console.log(e);
       }
