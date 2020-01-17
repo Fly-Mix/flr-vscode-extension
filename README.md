@@ -1,5 +1,10 @@
 # flr README
 
+## Feature
+
+- Configable path for monitoring to auto generate `r.g.dart`
+- auto format `r.g.dart` depends on vscode settings `dart.lineLength`
+
 ## Installation
 
 - search and install `FLR` in VSCode Extensions Session
