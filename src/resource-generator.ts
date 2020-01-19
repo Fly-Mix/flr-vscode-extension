@@ -419,7 +419,7 @@ export class ResourceGenerator {
     let rp = resourcePath;
     let p = rp.split(path.join(rootPath, "lib"))[1];
     var components = p.split("/");
-    if (rootPath.includes("\\\\")) {
+    if (process.platform === "win32") {
       components = p.split("\\");
     }
     let filename = components.pop()!;
