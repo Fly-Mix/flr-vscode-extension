@@ -9,7 +9,8 @@ import * as md5 from "md5";
 
 export class FileExplorer {
   private fileExplorer: vscode.TreeView<flrPathMan.Entry>;
-  private registeredWatchPaths: string[];
+  private registeredAssetsResourceDirPaths: string[];
+  private registeredFontsResourceDirPaths: string[];
   private fileMD5: string = "";
 
   constructor(context: vscode.ExtensionContext) {
@@ -21,7 +22,8 @@ export class FileExplorer {
       treeDataProvider
     });
 
-    this.registeredWatchPaths = new Array();
+    this.registeredAssetsResourceDirPaths = new Array();
+    this.registeredFontsResourceDirPaths = new Array();
 
     utils.registerCommandNice(context, utils.Commands.openFile, resource =>
       this.openResource(resource)
@@ -52,7 +54,9 @@ export class FileExplorer {
 
   /// watching current workspace file change to reload FLR
   private startWatching() {
-    this.registeredWatchPaths = new Array();
+    this.registeredAssetsResourceDirPaths = new Array();
+    this.registeredFontsResourceDirPaths = new Array();
+
     let raw = utils.firstWorkSpace();
     if (raw === undefined) {
       return;
@@ -85,11 +89,22 @@ export class FileExplorer {
           }
           this.refresh();
         } else {
-          let isDirty =
-            this.registeredWatchPaths.filter(path => filename.includes(path))
-              .length > 0;
+          let isAssetsResourceDirDirty =
+            this.registeredAssetsResourceDirPaths.filter(path =>
+              filename.includes(path)
+            ).length > 0;
+
+          let isFontsResourceDirDirty =
+            this.registeredFontsResourceDirPaths.filter(path =>
+              filename.includes(path)
+            ).length > 0;
+
+          let isDirty = isAssetsResourceDirDirty || isFontsResourceDirDirty;
           if (isDirty) {
-            ResourceGenerator.generateRFile(uri, this.registeredWatchPaths);
+            ResourceGenerator.generateRFile(
+              uri,
+              this.registeredAssetsResourceDirPaths
+            );
           }
         }
       }
@@ -104,7 +119,7 @@ export class FileExplorer {
     let uri = raw!;
     let pubspec = path.join(uri.fsPath, utils.Names.pubspec);
     this.refreshMonitorPath(vscode.Uri.file(pubspec));
-    ResourceGenerator.generateRFile(uri, this.registeredWatchPaths);
+    ResourceGenerator.generateRFile(uri, this.registeredAssetsResourceDirPaths);
   }
 
   private openResource(resource: vscode.Uri) {
@@ -121,9 +136,20 @@ export class FileExplorer {
       let data = yaml.safeLoad(fileContents);
       let flr = data["flr"];
       let assets = flr["assets"];
+      let fonts = flr["fonts"];
+
       if (assets !== null && assets !== undefined) {
         const vals = Object.values<string>(assets);
-        this.registeredWatchPaths = this.registeredWatchPaths.concat(vals);
+        this.registeredAssetsResourceDirPaths = this.registeredAssetsResourceDirPaths.concat(
+          vals
+        );
+      }
+
+      if (fonts !== null && fonts !== undefined) {
+        const vals = Object.values<string>(fonts);
+        this.registeredFontsResourceDirPaths = this.registeredFontsResourceDirPaths.concat(
+          vals
+        );
       }
     } catch (e) {
       vscode.window.showErrorMessage(e);
@@ -138,7 +164,8 @@ export class FileExplorer {
     } else {
       // disabled
       // stop all watcher
-      this.registeredWatchPaths = new Array();
+      this.registeredAssetsResourceDirPaths = new Array();
+      this.registeredFontsResourceDirPaths = new Array();
     }
     this.refresh();
     this.refreshGeneratedResource();
