@@ -4,8 +4,7 @@ import * as path from "path";
 import { FileExplorer } from "./flr-view-data-provider";
 import * as utils from "./utils";
 import * as yaml from "js-yaml";
-
-let version = "0.2.0";
+import * as FlrConstant from "./flr-constant";
 
 export function activate(context: vscode.ExtensionContext) {
   var fp: FileExplorer | undefined;
@@ -56,27 +55,21 @@ export function activate(context: vscode.ExtensionContext) {
 
         // check if has already init
         // check version
-        var flr = data["flr"] ?? new Map();
-        let ver = flr["version"] as string;
-        if (ver !== undefined) {
-          if (ver !== version) {
-            vscode.window.showInformationMessage(
-              `Already had version: ${ver}, flr current version: ${version}`
-            );
-            return;
-          } else {
-            return;
-          }
-        }
-        let assets = flr["assets"] as [string];
-        if (assets === undefined) {
-          flr["assets"] = ["lib/assets"];
+        var flr = data["flr"];
+        if (flr === undefined || flr === null) {
+          flr = new Map();
+        } else {
+          vscode.window.showInformationMessage(`Already had flr config`);
+          return;
         }
 
-        flr["version"] = version;
+        flr["core_version"] = FlrConstant.CORE_VERSION;
+        flr["dartfmt_line_length"] = FlrConstant.DARTFMT_LINE_LENGTH;
+        flr["assets"] = [];
+        flr["fonts"] = [];
         data["flr"] = flr;
 
-        var ref = "0.1.0";
+        var ref = "0.1.1";
         let str = await utils.execute("flutter --version");
         let lines = str.split("\n");
         if (lines.length > 0) {
@@ -89,7 +82,7 @@ export function activate(context: vscode.ExtensionContext) {
             // version using decoder callback
             let fixedVer = 11015; // v1.10.15
             if (parseInt(flutterVer) >= fixedVer) {
-              ref = "develop";
+              ref = "0.2.1";
             }
           }
         }
