@@ -22,7 +22,18 @@ export function activate(context: vscode.ExtensionContext) {
         let flr = data["flr"];
         if (flr !== undefined) {
           let assets = flr["assets"] as [string];
+          let fonts = flr["fonts"] as [string];
+          var legalResourceDirCount = 0;
+
+          // TODO: 从assets和fonts的配置中筛选合法的资源目录
           if (assets !== undefined && assets.length > 0) {
+            legalResourceDirCount += assets.length;
+          }
+          if (fonts !== undefined && fonts.length > 0) {
+            legalResourceDirCount += fonts.length;
+          }
+
+          if (legalResourceDirCount > 0) {
             fp?.toggleMonitor(true, vscode.Uri.file(pubspec));
           }
         }
