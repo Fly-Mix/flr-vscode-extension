@@ -6,6 +6,7 @@ import * as yaml from "js-yaml";
 import { ResourceGenerator } from "./resource-generator";
 import * as flrPathMan from "./folder-manager";
 import * as md5 from "md5";
+import { FlrFileUtil } from "./util/FlrFileUtil";
 
 export class FileExplorer {
   private fileExplorer: vscode.TreeView<flrPathMan.Entry>;
@@ -14,28 +15,32 @@ export class FileExplorer {
   private fileMD5: string = "";
 
   constructor(context: vscode.ExtensionContext) {
-    const treeDataProvider = new FileSystemProvider(name => {
+    const treeDataProvider = new FileSystemProvider((name) => {
       // only show flrfile
       return name === utils.Names.pubspec;
     });
     this.fileExplorer = vscode.window.createTreeView(utils.Names.flr, {
-      treeDataProvider
+      treeDataProvider,
     });
 
     this.registeredAssetsResourceDirPaths = new Array();
     this.registeredFontsResourceDirPaths = new Array();
 
-    utils.registerCommandNice(context, utils.Commands.openFile, resource =>
+    utils.registerCommandNice(context, utils.Commands.openFile, (resource) =>
       this.openResource(resource)
     );
 
-    utils.registerCommandNice(context, utils.Commands.stopMonitor, resource => {
-      this.toggleMonitor(false, resource.uri);
-    });
+    utils.registerCommandNice(
+      context,
+      utils.Commands.stopMonitor,
+      (resource) => {
+        this.toggleMonitor(false, resource.uri);
+      }
+    );
     utils.registerCommandNice(
       context,
       utils.Commands.startMonotor,
-      resource => {
+      (resource) => {
         this.toggleMonitor(true, resource.uri);
       }
     );
@@ -44,11 +49,11 @@ export class FileExplorer {
   }
 
   private refresh() {
-    const treeDataProvider = new FileSystemProvider(name => {
+    const treeDataProvider = new FileSystemProvider((name) => {
       return name === utils.Names.pubspec;
     });
     this.fileExplorer = vscode.window.createTreeView(utils.Names.flr, {
-      treeDataProvider
+      treeDataProvider,
     });
   }
 
@@ -83,19 +88,19 @@ export class FileExplorer {
             // compare md5 before and after, stop looping
             this.toggleMonitor(true, flrUri);
           } else {
-            flrPathMan.FolderManager.getPubspec().then(result => {
+            flrPathMan.FolderManager.getPubspec().then((result) => {
               this.toggleMonitor(result.length > 0, flrUri);
             });
           }
           this.refresh();
         } else {
           let isAssetsResourceDirDirty =
-            this.registeredAssetsResourceDirPaths.filter(path =>
+            this.registeredAssetsResourceDirPaths.filter((path) =>
               filename.includes(path)
             ).length > 0;
 
           let isFontsResourceDirDirty =
-            this.registeredFontsResourceDirPaths.filter(path =>
+            this.registeredFontsResourceDirPaths.filter((path) =>
               filename.includes(path)
             ).length > 0;
 
@@ -103,7 +108,8 @@ export class FileExplorer {
           if (isDirty) {
             ResourceGenerator.generateRFile(
               uri,
-              this.registeredAssetsResourceDirPaths
+              this.registeredAssetsResourceDirPaths,
+              this.registeredFontsResourceDirPaths
             );
           }
         }
@@ -119,7 +125,11 @@ export class FileExplorer {
     let uri = raw!;
     let pubspec = path.join(uri.fsPath, utils.Names.pubspec);
     this.refreshMonitorPath(vscode.Uri.file(pubspec));
-    ResourceGenerator.generateRFile(uri, this.registeredAssetsResourceDirPaths);
+    ResourceGenerator.generateRFile(
+      uri,
+      this.registeredAssetsResourceDirPaths,
+      this.registeredFontsResourceDirPaths
+    );
   }
 
   private openResource(resource: vscode.Uri) {
@@ -138,18 +148,23 @@ export class FileExplorer {
       let assets = flr["assets"];
       let fonts = flr["fonts"];
 
+      let flutterProjectRootDir = FlrFileUtil.getCurFlutterProjectRootDir();
       if (assets !== null && assets !== undefined) {
+        this.registeredAssetsResourceDirPaths = new Array();
         const vals = Object.values<string>(assets);
-        this.registeredAssetsResourceDirPaths = this.registeredAssetsResourceDirPaths.concat(
-          vals
-        );
+        for (const val of vals) {
+          let resourceDir = flutterProjectRootDir + "/" + val;
+          this.registeredAssetsResourceDirPaths.push(resourceDir);
+        }
       }
 
       if (fonts !== null && fonts !== undefined) {
+        this.registeredFontsResourceDirPaths = new Array();
         const vals = Object.values<string>(fonts);
-        this.registeredFontsResourceDirPaths = this.registeredFontsResourceDirPaths.concat(
-          vals
-        );
+        for (const val of vals) {
+          let resourceDir = flutterProjectRootDir + "/" + val;
+          this.registeredFontsResourceDirPaths.push(resourceDir);
+        }
       }
     } catch (e) {
       vscode.window.showErrorMessage(e);
@@ -188,18 +203,18 @@ export class FileSystemProvider
       );
       return children.map(([name, type]) => ({
         uri: vscode.Uri.file(path.join(element.uri.fsPath, name)),
-        type
+        type,
       }));
     }
 
     const workspaceFolder = vscode.workspace.workspaceFolders?.filter(
-      folder => folder.uri.scheme === "file"
+      (folder) => folder.uri.scheme === "file"
     )[0];
     if (workspaceFolder) {
       let ret = await flrPathMan.FolderManager.getPubspec();
       return ret.map(([name, type]) => ({
         uri: vscode.Uri.file(path.join(workspaceFolder.uri.fsPath, name)),
-        type
+        type,
       }));
     }
 
@@ -217,7 +232,7 @@ export class FileSystemProvider
       treeItem.command = {
         command: utils.Commands.openFile,
         title: "Open File",
-        arguments: [element.uri]
+        arguments: [element.uri],
       };
       treeItem.contextValue = "file";
     }

@@ -61,9 +61,11 @@ export function firstWorkSpace(): vscode.Uri | undefined {
 export function distictArray<T>(value: Array<T>): Array<T> {
   return value.filter((n, i) => value.indexOf(n) === i);
 }
-/// remove 2.0x / 3.0x from path
+/// remove 2.0x / 3.0x / 3x  from path
 export function trimScalesPathOf(item: string): string {
-  return item.replace("/2.0x", "").replace("/3.0x", "");
+  let re = /\/[0-9]*\.?[0-9]+[x]\//;
+  let result = item.replace(re, "/");
+  return result;
 }
 
 export class SupportedFormat {
@@ -81,6 +83,70 @@ export class SupportedFormat {
   static svg = [".svg"];
 
   static txt = [".txt", ".json", ".yaml", ".xml"];
+
+  static font = [".ttf", ".otf", ".ttc"];
+
+  static isSupportedNonSvgTypeImage(extname: string): boolean {
+    let lowerCaseExtname = extname.toLowerCase();
+
+    if (this.images.includes(lowerCaseExtname)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  static isSupportedSvgTypeImage(extname: string): boolean {
+    let lowerCaseExtname = extname.toLowerCase();
+
+    if (this.svg.includes(lowerCaseExtname)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  static isSupportedText(extname: string): boolean {
+    let lowerCaseExtname = extname.toLowerCase();
+
+    if (this.txt.includes(lowerCaseExtname)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  static isSupportedFont(extname: string): boolean {
+    let lowerCaseExtname = extname.toLowerCase();
+
+    if (this.font.includes(lowerCaseExtname)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  static isSupportedFormat(extname: string): boolean {
+    let lowerCaseExtname = extname.toLowerCase();
+
+    if (this.images.includes(lowerCaseExtname)) {
+      return true;
+    }
+
+    if (this.svg.includes(lowerCaseExtname)) {
+      return true;
+    }
+
+    if (this.txt.includes(lowerCaseExtname)) {
+      return true;
+    }
+
+    if (this.font.includes(lowerCaseExtname)) {
+      return true;
+    }
+
+    return false;
+  }
 }
 export class Template {
   static flrfileTemplate = `# Flrfile.yaml is used to config the asset directories that needs to be scanned in current flutter project directory.
