@@ -3,10 +3,10 @@ import * as path from "path";
 import * as fs from "fs";
 import * as utils from "./utils";
 import * as yaml from "js-yaml";
-import { ResourceGenerator } from "./resource-generator";
 import * as flrPathMan from "./folder-manager";
 import * as md5 from "md5";
 import { FlrFileUtil } from "./util/FlrFileUtil";
+import { FlrCommand } from "./FlrCommand";
 
 export class FileExplorer {
   private fileExplorer: vscode.TreeView<flrPathMan.Entry>;
@@ -106,8 +106,7 @@ export class FileExplorer {
 
           let isDirty = isAssetsResourceDirDirty || isFontsResourceDirDirty;
           if (isDirty) {
-            ResourceGenerator.generateRFile(
-              uri,
+            FlrCommand.generate(
               this.registeredAssetsResourceDirPaths,
               this.registeredFontsResourceDirPaths
             );
@@ -125,8 +124,7 @@ export class FileExplorer {
     let uri = raw!;
     let pubspec = path.join(uri.fsPath, utils.Names.pubspec);
     this.refreshMonitorPath(vscode.Uri.file(pubspec));
-    ResourceGenerator.generateRFile(
-      uri,
+    FlrCommand.generate(
       this.registeredAssetsResourceDirPaths,
       this.registeredFontsResourceDirPaths
     );

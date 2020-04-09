@@ -6,6 +6,7 @@ import * as utils from "./utils";
 import * as FlrConstant from "./FlrConstant";
 import { FlrFileUtil } from "./util/FlrFileUtil";
 import * as yaml from "js-yaml";
+import { FlrCommand } from "./FlrCommand";
 
 export function activate(context: vscode.ExtensionContext) {
   var fp: FileExplorer | undefined;
@@ -49,70 +50,7 @@ export function activate(context: vscode.ExtensionContext) {
     fp?.refreshGeneratedResource();
   });
   utils.registerCommandNice(context, utils.Commands.init, async () => {
-    let flutterProjectRootDir = FlrFileUtil.getCurFlutterProjectRootDir();
-    let pubspecFile = FlrFileUtil.getPubspecFilePath();
-    if (flutterProjectRootDir && pubspecFile) {
-      var pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(pubspecFile);
-
-      var flrDartfmtLineLength = FlrConstant.DARTFMT_LINE_LENGTH;
-      var flrAssets = [];
-      var flrFonts = [];
-      if (pubspecConfig.hasOwnProperty("flr")) {
-        vscode.window.showInformationMessage(`Already had flr config`);
-        let oldFlrConfig = pubspecConfig["flr"];
-
-        if (oldFlrConfig.hasOwnProperty("dartfmt_line_length")) {
-          flrDartfmtLineLength = oldFlrConfig["dartfmt_line_length"];
-        }
-
-        if (oldFlrConfig.hasOwnProperty("assets")) {
-          flrAssets = oldFlrConfig["assets"];
-        }
-
-        if (oldFlrConfig.hasOwnProperty("fonts")) {
-          flrFonts = oldFlrConfig["fonts"];
-        }
-      }
-
-      var flrConfig = {
-        core_version: FlrConstant.CORE_VERSION,
-        dartfmt_line_length: flrDartfmtLineLength,
-        assets: flrAssets,
-        fonts: flrFonts,
-      };
-      pubspecConfig["flr"] = flrConfig;
-
-      var ref = "0.1.1";
-      let str = await utils.execute("flutter --version");
-      let lines = str.split("\n");
-      if (lines.length > 0) {
-        let flutterVer = lines[0]
-          .split("•")[0]
-          ?.split(" ")[1]
-          ?.split("+")[0]
-          ?.replace(/\./g, "");
-        if (flutterVer !== null) {
-          // version using decoder callback
-          let fixedVer = 11015; // v1.10.15
-          if (parseInt(flutterVer) >= fixedVer) {
-            ref = "0.2.1";
-          }
-        }
-      }
-
-      let rDartLibraryConfig = {
-        git: {
-          url: "https://github.com/YK-Unit/r_dart_library.git",
-          ref: ref,
-        },
-      };
-
-      var dependenciesConfig = pubspecConfig["dependencies"];
-      dependenciesConfig["r_dart_library"] = rDartLibraryConfig;
-      pubspecConfig["dependencies"] = dependenciesConfig;
-
-      FlrFileUtil.dumpPubspecConfigToFile(pubspecConfig, pubspecFile);
-    }
+    FlrCommand.init();
   });
   fp = new FileExplorer(context);
   checkFlrFile();
