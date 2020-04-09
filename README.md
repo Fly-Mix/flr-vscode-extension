@@ -34,7 +34,7 @@ It'll show the `FLR(ASSETS MANGER)` session in `EXPLORER` window
 
 `+`: Add `flr config` to `pubspec.yaml`
 
-`Refresh`: regenerate `r.g.dart` for config
+`Refresh`: regenerate `r.g.dart` according to config
 
 `Start/Stop Monitor`: enable/disable resource folder monitor. if enabled, will auto refresh `r.g.dart` if resources changed.
 
