@@ -84,12 +84,12 @@ export class FlrCommand {
   }
 
   public static async generate(
-    assetsResourceDirPaths: string[],
-    fontsResourceDirPaths: string[]
+    assetsResourceDirs: string[],
+    fontsResourceDirs: string[]
   ) {
-    let validResourceDirSize =
-      assetsResourceDirPaths.length + fontsResourceDirPaths.length;
-    if (validResourceDirSize === 0) {
+    let validResourceDirCount =
+      assetsResourceDirs.length + fontsResourceDirs.length;
+    if (validResourceDirCount === 0) {
       return;
     }
 
@@ -109,8 +109,8 @@ export class FlrCommand {
 
     var imageAssetArray: string[] = new Array();
     var illegalImageFileArray: string[] = new Array();
-    for (const index in assetsResourceDirPaths) {
-      let resourceDir = assetsResourceDirPaths[index];
+    for (const index in assetsResourceDirs) {
+      let resourceDir = assetsResourceDirs[index];
       let imageFileResultTuple = FlrFileUtil.findImageFiles(resourceDir);
       let legalImageFileSubArray = imageFileResultTuple[0];
       let illegalImageFileSubArray = imageFileResultTuple[1];
@@ -143,8 +143,8 @@ export class FlrCommand {
 
     var textAssetArray: string[] = new Array();
     var illegalTextFileArray: string[] = new Array();
-    for (const index in assetsResourceDirPaths) {
-      let resourceDir = assetsResourceDirPaths[index];
+    for (const index in assetsResourceDirs) {
+      let resourceDir = assetsResourceDirs[index];
       let textFileResultTuple = FlrFileUtil.findTextFiles(resourceDir);
       let legalTextFileSubArray = textFileResultTuple[0];
       let illegalTextFileSubArray = textFileResultTuple[1];
@@ -165,8 +165,8 @@ export class FlrCommand {
 
     var fontFamilyConfigArray: Object[] = new Array();
     var illegalFontFileArray: string[] = new Array();
-    for (const index in fontsResourceDirPaths) {
-      let resourceDir = fontsResourceDirPaths[index];
+    for (const index in fontsResourceDirs) {
+      let resourceDir = fontsResourceDirs[index];
       let fontFamilyDirArray: string[] = FlrFileUtil.findTopChildDirs(
         resourceDir
       );
@@ -245,8 +245,10 @@ export class FlrCommand {
         "[!]: warning, found the following illegal resource file who's file basename contains illegal characters: ";
       for (const index in illegalResourceFileArray) {
         let resourceFile = illegalResourceFileArray[index];
-        tips += "\n" + "  - " + resourceFile;
+        tips += "\n";
+        tips += "  - " + resourceFile;
       }
+      tips += "\n";
       tips +=
         "[*]: to fix it, you should only use letters (a-z, A-Z), numbers (0-9), and the other legal characters ('_', '+', '-', '.', '·', '!', '@', '&', '$', '￥') to name the file";
       vscode.window.showInformationMessage(tips);

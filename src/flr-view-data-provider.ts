@@ -10,8 +10,8 @@ import { FlrCommand } from "./FlrCommand";
 
 export class FileExplorer {
   private fileExplorer: vscode.TreeView<flrPathMan.Entry>;
-  private registeredAssetsResourceDirPaths: string[];
-  private registeredFontsResourceDirPaths: string[];
+  private assetsRelativeResourceDirs: string[];
+  private fontsRelativeResourceDirs: string[];
   private fileMD5: string = "";
 
   constructor(context: vscode.ExtensionContext) {
@@ -23,8 +23,8 @@ export class FileExplorer {
       treeDataProvider,
     });
 
-    this.registeredAssetsResourceDirPaths = new Array();
-    this.registeredFontsResourceDirPaths = new Array();
+    this.assetsRelativeResourceDirs = new Array();
+    this.fontsRelativeResourceDirs = new Array();
 
     utils.registerCommandNice(context, utils.Commands.openFile, (resource) =>
       this.openResource(resource)
@@ -59,8 +59,8 @@ export class FileExplorer {
 
   /// watching current workspace file change to reload FLR
   private startWatching() {
-    this.registeredAssetsResourceDirPaths = new Array();
-    this.registeredFontsResourceDirPaths = new Array();
+    this.assetsRelativeResourceDirs = new Array();
+    this.fontsRelativeResourceDirs = new Array();
 
     let raw = utils.firstWorkSpace();
     if (raw === undefined) {
@@ -95,21 +95,18 @@ export class FileExplorer {
           this.refresh();
         } else {
           let isAssetsResourceDirDirty =
-            this.registeredAssetsResourceDirPaths.filter((path) =>
+            this.assetsRelativeResourceDirs.filter((path) =>
               filename.includes(path)
             ).length > 0;
 
           let isFontsResourceDirDirty =
-            this.registeredFontsResourceDirPaths.filter((path) =>
+            this.fontsRelativeResourceDirs.filter((path) =>
               filename.includes(path)
             ).length > 0;
 
           let isDirty = isAssetsResourceDirDirty || isFontsResourceDirDirty;
           if (isDirty) {
-            FlrCommand.generate(
-              this.registeredAssetsResourceDirPaths,
-              this.registeredFontsResourceDirPaths
-            );
+            this.invokeFlrGenerateCmd();
           }
         }
       }
@@ -124,10 +121,24 @@ export class FileExplorer {
     let uri = raw!;
     let pubspec = path.join(uri.fsPath, utils.Names.pubspec);
     this.refreshMonitorPath(vscode.Uri.file(pubspec));
-    FlrCommand.generate(
-      this.registeredAssetsResourceDirPaths,
-      this.registeredFontsResourceDirPaths
+    this.invokeFlrGenerateCmd();
+  }
+
+  private invokeFlrGenerateCmd() {
+    let flutterProjectRootDir = FlrFileUtil.getCurFlutterProjectRootDir();
+    let assetsResourceDirs = this.assetsRelativeResourceDirs.map(
+      (relativeResourceDir) => {
+        let resourceDir = flutterProjectRootDir + "/" + relativeResourceDir;
+        return resourceDir;
+      }
     );
+    let fontsResourceDirs = this.fontsRelativeResourceDirs.map(
+      (relativeResourceDir) => {
+        let resourceDir = flutterProjectRootDir + "/" + relativeResourceDir;
+        return resourceDir;
+      }
+    );
+    FlrCommand.generate(assetsResourceDirs, fontsResourceDirs);
   }
 
   private openResource(resource: vscode.Uri) {
@@ -148,20 +159,18 @@ export class FileExplorer {
 
       let flutterProjectRootDir = FlrFileUtil.getCurFlutterProjectRootDir();
       if (assets !== null && assets !== undefined) {
-        this.registeredAssetsResourceDirPaths = new Array();
+        this.assetsRelativeResourceDirs = new Array();
         const vals = Object.values<string>(assets);
         for (const val of vals) {
-          let resourceDir = flutterProjectRootDir + "/" + val;
-          this.registeredAssetsResourceDirPaths.push(resourceDir);
+          this.assetsRelativeResourceDirs.push(val);
         }
       }
 
       if (fonts !== null && fonts !== undefined) {
-        this.registeredFontsResourceDirPaths = new Array();
+        this.fontsRelativeResourceDirs = new Array();
         const vals = Object.values<string>(fonts);
         for (const val of vals) {
-          let resourceDir = flutterProjectRootDir + "/" + val;
-          this.registeredFontsResourceDirPaths.push(resourceDir);
+          this.fontsRelativeResourceDirs.push(val);
         }
       }
     } catch (e) {
@@ -177,8 +186,8 @@ export class FileExplorer {
     } else {
       // disabled
       // stop all watcher
-      this.registeredAssetsResourceDirPaths = new Array();
-      this.registeredFontsResourceDirPaths = new Array();
+      this.assetsRelativeResourceDirs = new Array();
+      this.fontsRelativeResourceDirs = new Array();
     }
     this.refresh();
     this.refreshGeneratedResource();
