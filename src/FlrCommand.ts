@@ -242,7 +242,7 @@ export class FlrCommand {
 
     if (illegalResourceFileArray.length > 0) {
       var tips =
-        "[!]: warning, found the following illegal resource file who's file basename contains illegal characters: ";
+        "[!]: warning, found the following resource(s) that the file basename contains illegal characters: ";
       for (const index in illegalResourceFileArray) {
         let resourceFile = illegalResourceFileArray[index];
         tips += "\n";
