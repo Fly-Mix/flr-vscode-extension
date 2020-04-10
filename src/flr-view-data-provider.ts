@@ -3,37 +3,44 @@ import * as path from "path";
 import * as fs from "fs";
 import * as utils from "./utils";
 import * as yaml from "js-yaml";
-import { ResourceGenerator } from "./resource-generator";
 import * as flrPathMan from "./folder-manager";
 import * as md5 from "md5";
+import { FlrFileUtil } from "./util/FlrFileUtil";
+import { FlrCommand } from "./FlrCommand";
 
 export class FileExplorer {
   private fileExplorer: vscode.TreeView<flrPathMan.Entry>;
-  private registeredWatchPaths: string[];
+  private assetsRelativeResourceDirs: string[];
+  private fontsRelativeResourceDirs: string[];
   private fileMD5: string = "";
 
   constructor(context: vscode.ExtensionContext) {
-    const treeDataProvider = new FileSystemProvider(name => {
+    const treeDataProvider = new FileSystemProvider((name) => {
       // only show flrfile
       return name === utils.Names.pubspec;
     });
     this.fileExplorer = vscode.window.createTreeView(utils.Names.flr, {
-      treeDataProvider
+      treeDataProvider,
     });
 
-    this.registeredWatchPaths = new Array();
+    this.assetsRelativeResourceDirs = new Array();
+    this.fontsRelativeResourceDirs = new Array();
 
-    utils.registerCommandNice(context, utils.Commands.openFile, resource =>
+    utils.registerCommandNice(context, utils.Commands.openFile, (resource) =>
       this.openResource(resource)
     );
 
-    utils.registerCommandNice(context, utils.Commands.stopMonitor, resource => {
-      this.toggleMonitor(false, resource.uri);
-    });
+    utils.registerCommandNice(
+      context,
+      utils.Commands.stopMonitor,
+      (resource) => {
+        this.toggleMonitor(false, resource.uri);
+      }
+    );
     utils.registerCommandNice(
       context,
       utils.Commands.startMonotor,
-      resource => {
+      (resource) => {
         this.toggleMonitor(true, resource.uri);
       }
     );
@@ -42,17 +49,19 @@ export class FileExplorer {
   }
 
   private refresh() {
-    const treeDataProvider = new FileSystemProvider(name => {
+    const treeDataProvider = new FileSystemProvider((name) => {
       return name === utils.Names.pubspec;
     });
     this.fileExplorer = vscode.window.createTreeView(utils.Names.flr, {
-      treeDataProvider
+      treeDataProvider,
     });
   }
 
   /// watching current workspace file change to reload FLR
   private startWatching() {
-    this.registeredWatchPaths = new Array();
+    this.assetsRelativeResourceDirs = new Array();
+    this.fontsRelativeResourceDirs = new Array();
+
     let raw = utils.firstWorkSpace();
     if (raw === undefined) {
       return;
@@ -79,17 +88,25 @@ export class FileExplorer {
             // compare md5 before and after, stop looping
             this.toggleMonitor(true, flrUri);
           } else {
-            flrPathMan.FolderManager.getPubspec().then(result => {
+            flrPathMan.FolderManager.getPubspec().then((result) => {
               this.toggleMonitor(result.length > 0, flrUri);
             });
           }
           this.refresh();
         } else {
-          let isDirty =
-            this.registeredWatchPaths.filter(path => filename.includes(path))
-              .length > 0;
+          let isAssetsResourceDirDirty =
+            this.assetsRelativeResourceDirs.filter((path) =>
+              filename.includes(path)
+            ).length > 0;
+
+          let isFontsResourceDirDirty =
+            this.fontsRelativeResourceDirs.filter((path) =>
+              filename.includes(path)
+            ).length > 0;
+
+          let isDirty = isAssetsResourceDirDirty || isFontsResourceDirDirty;
           if (isDirty) {
-            ResourceGenerator.generateRFile(uri, this.registeredWatchPaths);
+            this.invokeFlrGenerateCmd();
           }
         }
       }
@@ -104,7 +121,24 @@ export class FileExplorer {
     let uri = raw!;
     let pubspec = path.join(uri.fsPath, utils.Names.pubspec);
     this.refreshMonitorPath(vscode.Uri.file(pubspec));
-    ResourceGenerator.generateRFile(uri, this.registeredWatchPaths);
+    this.invokeFlrGenerateCmd();
+  }
+
+  private invokeFlrGenerateCmd() {
+    let flutterProjectRootDir = FlrFileUtil.getCurFlutterProjectRootDir();
+    let assetsResourceDirs = this.assetsRelativeResourceDirs.map(
+      (relativeResourceDir) => {
+        let resourceDir = flutterProjectRootDir + "/" + relativeResourceDir;
+        return resourceDir;
+      }
+    );
+    let fontsResourceDirs = this.fontsRelativeResourceDirs.map(
+      (relativeResourceDir) => {
+        let resourceDir = flutterProjectRootDir + "/" + relativeResourceDir;
+        return resourceDir;
+      }
+    );
+    FlrCommand.generate(assetsResourceDirs, fontsResourceDirs);
   }
 
   private openResource(resource: vscode.Uri) {
@@ -121,9 +155,23 @@ export class FileExplorer {
       let data = yaml.safeLoad(fileContents);
       let flr = data["flr"];
       let assets = flr["assets"];
+      let fonts = flr["fonts"];
+
+      let flutterProjectRootDir = FlrFileUtil.getCurFlutterProjectRootDir();
       if (assets !== null && assets !== undefined) {
+        this.assetsRelativeResourceDirs = new Array();
         const vals = Object.values<string>(assets);
-        this.registeredWatchPaths = this.registeredWatchPaths.concat(vals);
+        for (const val of vals) {
+          this.assetsRelativeResourceDirs.push(val);
+        }
+      }
+
+      if (fonts !== null && fonts !== undefined) {
+        this.fontsRelativeResourceDirs = new Array();
+        const vals = Object.values<string>(fonts);
+        for (const val of vals) {
+          this.fontsRelativeResourceDirs.push(val);
+        }
       }
     } catch (e) {
       vscode.window.showErrorMessage(e);
@@ -138,7 +186,8 @@ export class FileExplorer {
     } else {
       // disabled
       // stop all watcher
-      this.registeredWatchPaths = new Array();
+      this.assetsRelativeResourceDirs = new Array();
+      this.fontsRelativeResourceDirs = new Array();
     }
     this.refresh();
     this.refreshGeneratedResource();
@@ -161,18 +210,18 @@ export class FileSystemProvider
       );
       return children.map(([name, type]) => ({
         uri: vscode.Uri.file(path.join(element.uri.fsPath, name)),
-        type
+        type,
       }));
     }
 
     const workspaceFolder = vscode.workspace.workspaceFolders?.filter(
-      folder => folder.uri.scheme === "file"
+      (folder) => folder.uri.scheme === "file"
     )[0];
     if (workspaceFolder) {
       let ret = await flrPathMan.FolderManager.getPubspec();
       return ret.map(([name, type]) => ({
         uri: vscode.Uri.file(path.join(workspaceFolder.uri.fsPath, name)),
-        type
+        type,
       }));
     }
 
@@ -190,7 +239,7 @@ export class FileSystemProvider
       treeItem.command = {
         command: utils.Commands.openFile,
         title: "Open File",
-        arguments: [element.uri]
+        arguments: [element.uri],
       };
       treeItem.contextValue = "file";
     }
