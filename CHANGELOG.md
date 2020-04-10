@@ -1,8 +1,12 @@
-# Change Log
+## [1.0.0] - Public Release
 
-All notable changes to the "flr" extension will be documented in this file.
-
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+- Automatically specify assets in pubspec.yaml and generate r.g.dart file
+- Support for processing image assets (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.icon`, `.bmp`, `.wbmp`, `.svg`)
+- Support for processing [image asset variants](https://flutter.dev/docs/development/ui/assets-and-images#asset-variants)
+- Support for processing text assets ( `.txt`, `.json`, `.yaml`, `.xml`)
+- Support for processing font assets (`.ttf`, `.otf`, `.ttc`)
+- New asset generation algorithm to support all kinds of standard or nonstandard image/text resource structure
+- New asset-id generation algorithm to support assets with the same filename but different path
 
 ## [0.0.7]
 
