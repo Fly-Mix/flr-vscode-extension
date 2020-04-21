@@ -33,7 +33,7 @@ export class FlrAssetUtil {
    * 为当前资源文件生成 main_asset
    *
    * === Examples
-   * flutterDir =  "~/path/to/flutter_r_demo"
+   * flutterProjectDir =  "~/path/to/flutter_r_demo"
    * packageName = "flutter_r_demo"
    *
    * === Example-1
@@ -54,7 +54,7 @@ export class FlrAssetUtil {
    *
    * */
   public static generateMainAsset(
-    flutterDir: string,
+    flutterProjectDir: string,
     packageName: string,
     legalResourceFile: string
   ): string {
@@ -78,9 +78,9 @@ export class FlrAssetUtil {
     // mainRelativeResourceFile: lib/assets/images/test.png
     // mainImpliedRelativeResourceFile: assets/images/test.png
     // "^$~/path/to/flutter_r_demo/"
-    let flutterDirPrefixRegex = new RegExp(`^${flutterDir}/`);
+    let flutterProjectDirPrefixRegex = new RegExp(`^${flutterProjectDir}/`);
     let mainRelativeResourceFile = mainResourceFile.replace(
-      flutterDirPrefixRegex,
+      flutterProjectDirPrefixRegex,
       ""
     );
     let libPrefixRegx = /lib\//;
@@ -99,7 +99,7 @@ export class FlrAssetUtil {
    * 遍历指定资源目录下扫描找到的legalImageFile数组生成imageAsset数组
    * */
   public static generateImageAssets(
-    flutterDir: string,
+    flutterProjectDir: string,
     packageName: string,
     legalImageFileArray: string[]
   ): string[] {
@@ -107,7 +107,7 @@ export class FlrAssetUtil {
 
     legalImageFileArray.forEach((legalResourceFile) => {
       let imageAsset = this.generateMainAsset(
-        flutterDir,
+        flutterProjectDir,
         packageName,
         legalResourceFile
       );
@@ -122,7 +122,7 @@ export class FlrAssetUtil {
    * 遍历指定资源目录下扫描找到的legalTextFile数组生成textAsset数组
    * */
   public static generateTextAssets(
-    flutterDir: string,
+    flutterProjectDir: string,
     packageName: string,
     legalTextFileArray: string[]
   ): string[] {
@@ -130,7 +130,7 @@ export class FlrAssetUtil {
 
     legalTextFileArray.forEach((legalResourceFile) => {
       let textAsset = this.generateMainAsset(
-        flutterDir,
+        flutterProjectDir,
         packageName,
         legalResourceFile
       );
@@ -147,7 +147,7 @@ export class FlrAssetUtil {
    * fontAssetConfig = {"asset": "packages/flutter_r_demo/assets/fonts/Amiri/Amiri-Regular.ttf"}
    * */
   public static generateFontAssetConfigs(
-    flutterDir: string,
+    flutterProjectDir: string,
     packageName: string,
     legalFontFileArray: string[]
   ): Object[] {
@@ -155,7 +155,7 @@ export class FlrAssetUtil {
 
     legalFontFileArray.forEach((legalResourceFile) => {
       let fontAsset = this.generateMainAsset(
-        flutterDir,
+        flutterProjectDir,
         packageName,
         legalResourceFile
       );
