@@ -6,6 +6,7 @@
   "icon": "resources/flr-icon.png",
   "version": "2.0.0",
   "repository": "https://github.com/Fly-Mix/flr-vscode-extension",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.41.0"
   },
