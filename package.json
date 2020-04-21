@@ -4,7 +4,7 @@
   "displayName": "Flr",
   "description": "A Flutter Resource Manager VSCode Extension",
   "icon": "resources/flr-icon.png",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "repository": "https://github.com/Fly-Mix/flr-vscode-extension",
   "engines": {
     "vscode": "^1.41.0"
