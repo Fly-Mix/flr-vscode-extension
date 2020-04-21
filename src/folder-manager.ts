@@ -9,13 +9,13 @@ export class FolderManager {
   // MARK: Helper
   static async getPubspec(): Promise<[string, vscode.FileType][]> {
     const workspaceFolder = vscode.workspace.workspaceFolders?.filter(
-      folder => folder.uri.scheme === "file"
+      (folder) => folder.uri.scheme === "file"
     )[0];
     if (workspaceFolder) {
       const children = await this.readDirectory(workspaceFolder.uri);
       children.sort((a, b) => {
         if (a[1] === b[1]) {
-          return a[0].localeCompare(b[0]);
+          return utils.caseInsensitiveComparator(a[0], b[0]);
         }
         return a[1] === vscode.FileType.Directory ? -1 : 1;
       });
@@ -106,7 +106,7 @@ namespace _ {
     }
 
     if (Array.isArray(items)) {
-      return items.map(item => item.normalize("NFC"));
+      return items.map((item) => item.normalize("NFC"));
     }
 
     return items.normalize("NFC");
@@ -138,7 +138,7 @@ namespace _ {
 
   export function writefile(path: string, content: Buffer): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      fs.writeFile(path, content, error =>
+      fs.writeFile(path, content, (error) =>
         handleResult(resolve, reject, error, void 0)
       );
     });
@@ -146,25 +146,25 @@ namespace _ {
 
   export function exists(path: string): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
-      fs.exists(path, exists => handleResult(resolve, reject, null, exists));
+      fs.exists(path, (exists) => handleResult(resolve, reject, null, exists));
     });
   }
 
   export function rmrf(path: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      rimraf(path, error => handleResult(resolve, reject, error, void 0));
+      rimraf(path, (error) => handleResult(resolve, reject, error, void 0));
     });
   }
 
   export function mkdir(path: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      mkdirp(path, error => handleResult(resolve, reject, error, void 0));
+      mkdirp(path, (error) => handleResult(resolve, reject, error, void 0));
     });
   }
 
   export function rename(oldPath: string, newPath: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      fs.rename(oldPath, newPath, error =>
+      fs.rename(oldPath, newPath, (error) =>
         handleResult(resolve, reject, error, void 0)
       );
     });
@@ -172,7 +172,7 @@ namespace _ {
 
   export function unlink(path: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      fs.unlink(path, error => handleResult(resolve, reject, error, void 0));
+      fs.unlink(path, (error) => handleResult(resolve, reject, error, void 0));
     });
   }
 }

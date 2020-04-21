@@ -56,3 +56,13 @@ export function firstWorkSpace(): vscode.Uri | undefined {
 export function distictArray<T>(value: Array<T>): Array<T> {
   return value.filter((n, i) => value.indexOf(n) === i);
 }
+
+export function caseInsensitiveComparator(valueA: string, valueB: string) {
+  if (valueA < valueB) {
+    return -1;
+  } else if (valueA > valueB) {
+    return 1;
+  } else {
+    return 0;
+  }
+}

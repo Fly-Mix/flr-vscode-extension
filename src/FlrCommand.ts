@@ -211,7 +211,7 @@ export class FlrCommand {
             bAsset = "";
           }
 
-          return aAsset.localeCompare(bAsset);
+          return utils.caseInsensitiveComparator(aAsset, bAsset);
         });
 
         let fontFamilyConfig = {
@@ -234,7 +234,7 @@ export class FlrCommand {
           bFamily = "";
         }
 
-        return aFamily.localeCompare(bFamily);
+        return utils.caseInsensitiveComparator(aFamily, bFamily);
       });
     }
 
