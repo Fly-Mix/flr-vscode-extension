@@ -172,16 +172,40 @@ export class FlrCodeUtil {
   }
 
   /*
-   * 为asset生成对应的注释；注释内容为资产在pubspec.yaml中的对应声明
+   * 为当前asset生成注释
+   *
+   * === Examples
+   * packageName = "flutter_r_demo"
+   *
+   * === Example-1
+   * asset = "packages/flutter_r_demo/assets/images/test.png"
+   * assetComment = "asset: lib/assets/images/test.png"
+   *
+   * === Example-2
+   * asset = "assets/images/test.png"
+   * assetComment = "asset: assets/images/test.png"
+   *
    * */
   public static generateAssetComment(
     asset: string,
     packageName: string
   ): string {
-    let packageInfo = "packages/" + packageName + "/";
-    let assetName = asset.replace(packageInfo, "");
-    let assetComment = "asset: " + assetName;
-    return assetComment;
+    let packagesPrefix = "packages/" + packageName + "/";
+    if (asset.startsWith(packagesPrefix)) {
+      // asset: packages/flutter_r_demo/assets/images/test.png
+      // to get assetName: assets/images/test.png
+      let assetName = asset.replace(packagesPrefix, "");
+
+      let assetComment = "asset: lib/" + assetName;
+      return assetComment;
+    } else {
+      // asset: assets/images/test.png
+      // to get assetName: assets/images/test.png
+      let assetName = asset;
+
+      let assetComment = "asset: " + assetName;
+      return assetComment;
+    }
   }
 
   /*
