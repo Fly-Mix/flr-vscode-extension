@@ -95,13 +95,13 @@ export class FileExplorer {
           this.refresh();
         } else {
           let isAssetsResourceDirDirty =
-            this.assetsRelativeResourceDirs.filter((path) =>
-              filename.includes(path)
+            this.assetsRelativeResourceDirs.filter(
+              (path) => filename.lastIndexOf(path, 0) === 0
             ).length > 0;
 
           let isFontsResourceDirDirty =
-            this.fontsRelativeResourceDirs.filter((path) =>
-              filename.includes(path)
+            this.fontsRelativeResourceDirs.filter(
+              (path) => filename.lastIndexOf(path, 0) === 0
             ).length > 0;
 
           let isDirty = isAssetsResourceDirDirty || isFontsResourceDirDirty;
