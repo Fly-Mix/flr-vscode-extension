@@ -52,6 +52,40 @@ export class FlrFileUtil {
   }
 
   /*
+   * 判断当前flutter工程的工程类型是不是Package工程类型
+   *
+   * flutter工程共有4种工程类型：
+   * - app：Flutter App工程，用于开发纯Flutter的App
+   * - module：Flutter Component工程，用于开发Flutter组件以嵌入iOS和Android原生工程
+   * - package：General Dart Package工程，用于开发一个供应用层开发者使用的包
+   * - plugin：Plugin Package工程（属于特殊的Dart Package工程），用于开发一个调用特定平台API的包*
+   *
+   * flutter工程的工程类型可从flutter工程目录的 .metadata 文件中读取获得
+   * 如果不存在 .metadata 文件，则判断 pubspec.yaml 是否存在 author 配置，若存在，说明是一个 Package工程
+   * */
+  public static isPackageProjectType(flutterProjectDir: string): boolean {
+    let metadataFilePath = flutterProjectDir + "/.metadata";
+
+    if (fs.existsSync(metadataFilePath)) {
+      let fileContents = fs.readFileSync(metadataFilePath, "utf8");
+      let metadataConfig = yaml.safeLoad(fileContents);
+
+      let projectType = metadataConfig["project_type"];
+      if (projectType === "package" || projectType === "plugin") {
+        return true;
+      }
+    } else {
+      let pubspecFile = this.getPubspecFilePath(flutterProjectDir);
+      let pubspecConfig = this.loadPubspecConfigFromFile(pubspecFile);
+      if (pubspecConfig.hasOwnProperty("author")) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /*
    * 判断当前资源文件是否合法
    *
    * 判断资源文件合法的标准是：

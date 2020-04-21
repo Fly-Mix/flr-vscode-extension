@@ -108,6 +108,10 @@ export class FlrCommand {
     let pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(pubspecFile);
     let packageName = pubspecConfig["name"];
 
+    let isPackageProjectType = FlrFileUtil.isPackageProjectType(
+      flutterProjectRootDir
+    );
+
     var imageAssetArray: string[] = new Array();
     var illegalImageFileArray: string[] = new Array();
     for (const index in assetsResourceDirs) {
