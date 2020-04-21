@@ -16,31 +16,32 @@ export function activate(context: vscode.ExtensionContext) {
   function checkFlrFile(): Promise<boolean> {
     return new Promise<boolean>((success, failure) => {
       let flutterProjectRootDir = FlrFileUtil.getCurFlutterProjectRootDir();
-      let pubspecFile = FlrFileUtil.getPubspecFilePath();
-      if (flutterProjectRootDir && pubspecFile) {
-        let pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(pubspecFile);
-
-        if (pubspecConfig.hasOwnProperty("flr")) {
-          let flrConfig = pubspecConfig["flr"];
-
-          let assets = flrConfig["assets"] as [string];
-          let fonts = flrConfig["fonts"] as [string];
-          var legalResourceDirCount = 0;
-
-          // TODO: 从assets和fonts的配置中筛选合法的资源目录
-          if (assets !== undefined && assets.length > 0) {
-            legalResourceDirCount += assets.length;
-          }
-          if (fonts !== undefined && fonts.length > 0) {
-            legalResourceDirCount += fonts.length;
-          }
-
-          if (legalResourceDirCount > 0) {
-            fp?.toggleMonitor(true, vscode.Uri.file(pubspecFile));
-          }
-        }
-      } else {
+      if (flutterProjectRootDir === undefined) {
         success(false);
+        return;
+      }
+
+      let pubspecFile = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
+      let pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(pubspecFile);
+
+      if (pubspecConfig.hasOwnProperty("flr")) {
+        let flrConfig = pubspecConfig["flr"];
+
+        let assets = flrConfig["assets"] as [string];
+        let fonts = flrConfig["fonts"] as [string];
+        var legalResourceDirCount = 0;
+
+        // TODO: 从assets和fonts的配置中筛选合法的资源目录
+        if (assets !== undefined && assets.length > 0) {
+          legalResourceDirCount += assets.length;
+        }
+        if (fonts !== undefined && fonts.length > 0) {
+          legalResourceDirCount += fonts.length;
+        }
+
+        if (legalResourceDirCount > 0) {
+          fp?.toggleMonitor(true, vscode.Uri.file(pubspecFile));
+        }
       }
     });
   }

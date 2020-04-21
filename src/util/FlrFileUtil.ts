@@ -21,14 +21,9 @@ export class FlrFileUtil {
   /*
    *  获取当前flutter工程的pubspec.yaml文件的路径
    */
-  public static getPubspecFilePath(): string | undefined {
-    let curFlutterProjectRootDir = this.getCurFlutterProjectRootDir();
-    if (curFlutterProjectRootDir) {
-      let filePath = curFlutterProjectRootDir + "/pubspec.yaml";
-      return filePath;
-    }
-
-    return undefined;
+  public static getPubspecFilePath(flutterProjectDir: string): string {
+    let filePath = flutterProjectDir + "/pubspec.yaml";
+    return filePath;
   }
 
   public static loadPubspecConfigFromFile(pubspecFile: string): any {

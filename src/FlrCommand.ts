@@ -12,11 +12,11 @@ import { exec } from "child_process";
 export class FlrCommand {
   public static async init() {
     let flutterProjectRootDir = FlrFileUtil.getCurFlutterProjectRootDir();
-    let pubspecFile = FlrFileUtil.getPubspecFilePath();
-
-    if (flutterProjectRootDir === undefined || pubspecFile === undefined) {
+    if (flutterProjectRootDir === undefined) {
       return;
     }
+
+    let pubspecFile = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
 
     if (fs.existsSync(pubspecFile) === false) {
       return;
@@ -94,11 +94,12 @@ export class FlrCommand {
     }
 
     let flutterProjectRootDir = FlrFileUtil.getCurFlutterProjectRootDir();
-    let pubspecFile = FlrFileUtil.getPubspecFilePath();
 
-    if (flutterProjectRootDir === undefined || pubspecFile === undefined) {
+    if (flutterProjectRootDir === undefined) {
       return;
     }
+
+    let pubspecFile = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
 
     if (fs.existsSync(pubspecFile) === false) {
       return;
