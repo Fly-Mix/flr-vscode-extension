@@ -327,7 +327,8 @@ export class FlrCommand {
     let g__R_Image_AssetResource_class_code = FlrCodeUtil.generate__R_Image_AssetResource_class(
       nonSvgImageAssetArray,
       nonSvgImageAssetIdDict,
-      packageName
+      packageName,
+      isPackageProjectType
     );
     r_dart_file_content += g__R_Image_AssetResource_class_code;
 
@@ -335,7 +336,8 @@ export class FlrCommand {
     let g__R_Svg_AssetResource_class_code = FlrCodeUtil.generate__R_Svg_AssetResource_class(
       svgImageAssetArray,
       svgImageAssetIdDict,
-      packageName
+      packageName,
+      isPackageProjectType
     );
     r_dart_file_content += g__R_Svg_AssetResource_class_code;
 
@@ -343,7 +345,8 @@ export class FlrCommand {
     let g__R_Text_AssetResource_class_code = FlrCodeUtil.generate__R_Text_AssetResource_class(
       textAssetArray,
       textAssetIdDict,
-      packageName
+      packageName,
+      isPackageProjectType
     );
     r_dart_file_content += g__R_Text_AssetResource_class_code;
 
