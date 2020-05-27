@@ -84,7 +84,8 @@ export class FlrAssetUtil {
 
     // mainResourceFile:  ~/path/to/flutter_r_demo/lib/assets/images/test.png
     // to get mainRelativeResourceFile: lib/assets/images/test.png
-    let flutterProjectDirPrefixRegex = new RegExp(`^${flutterProjectDir}/`);
+    let replaced = flutterProjectDir.replace(/\\/g, "/");
+    let flutterProjectDirPrefixRegex = new RegExp(`^${replaced}/`);
     let mainRelativeResourceFile = mainResourceFile.replace(
       flutterProjectDirPrefixRegex,
       ""
