@@ -42,52 +42,92 @@ It'll show the `FLR(ASSETS MANGER)` session in `EXPLORER` window
 
 ## Recommended Flutter Resource Structure 
 
- `Flr ` recommends the following resource structure:
+`Flr` the following flutter resource structure schemes:
 
-```
-flutter_project_root_dir
-├── build
-│   ├── ..
-├── lib
-│   ├── assets
-│   │   ├── #{module}-images // image resources root directory of a moudle
-│   │   │   ├── #{main_image_asset}
-│   │   │   ├── #{variant-dir} // image resources root directory of a variant
-│   │   │   │   ├── #{image_asset_variant}
-│   │   │   │
-│   │   ├── home-images // image resources root directory of home module
-│   │   │   ├── home_icon.png
-│   │   │   ├── home_badge.svg
-│   │   │   ├── 3.0x // image resources root directory of a 3.0x-ratio-variant
-│   │   │   │   ├── home_icon.png
-│   │   │   │
-│   │   ├── texts // text resources root directory
-│   │   │   │     // (you can also break it down further by module)
-│   │   │   └── test.json
-│   │   │   └── test.yaml
-│   │   │   │
-│   │   ├── fonts // font resources root directory of all font-family
-│   │   │   ├── #{font-family} // font resources root directory of a font-family
-│   │   │   │   ├── #{font-family}-#{font_weight_or_style}.ttf
-│   │   │   │
-│   │   │   ├── Amiri // font resources root directory of Amiri font-family
-│   │   │   │   ├── Amiri-Regular.ttf
-│   │   │   │   ├── Amiri-Bold.ttf
-│   │   │   │   ├── Amiri-Italic.ttf
-│   │   │   │   ├── Amiri-BoldItalic.ttf
-│   ├── ..
-```
+- scheme 1:
 
+  ```
+  flutter_project_root_dir
+  ├── build
+  │   ├── ..
+  ├── lib
+  │   ├── assets
+  │   │   ├── images // image resource directory of all modules
+  │   │   │   ├── #{module} // image resource directory of a module
+  │   │   │   │   ├── #{main_image_asset}
+  │   │   │   │   ├── #{variant-dir} // image resource directory of a variant
+  │   │   │   │   │   ├── #{image_asset_variant}
+  │   │   │   │
+  │   │   │   ├── home // image resource directory of home module
+  │   │   │   │   ├── home_badge.svg
+  │   │   │   │   ├── home_icon.png
+  │   │   │   │   ├── 3.0x // image resource directory of a 3.0x-ratio-variant
+  │   │   │   │   │   ├── home_icon.png
+  │   │   │   │		
+  │   │   ├── texts // text resource directory
+  │   │   │   │     // (you can also break it down further by module)
+  │   │   │   └── test.json
+  │   │   │   └── test.yaml
+  │   │   │   │
+  │   │   ├── fonts // font resource directory of all font-families
+  │   │   │   ├── #{font-family} // font resource directory of a font-family
+  │   │   │   │   ├── #{font-family}-#{font_weight_or_style}.ttf
+  │   │   │   │
+  │   │   │   ├── Amiri // font resource directory of Amiri font-family
+  │   │   │   │   ├── Amiri-Regular.ttf
+  │   │   │   │   ├── Amiri-Bold.ttf
+  │   │   │   │   ├── Amiri-Italic.ttf
+  │   │   │   │   ├── Amiri-BoldItalic.ttf
+  │   ├── ..
+
+  ```
+- scheme 2:
+  ```
+  flutter_project_root_dir
+  ├── build
+  │   ├── ..
+  ├── lib
+  │   ├── ..
+  ├── assets
+  │   ├── images // image resource directory of all modules
+  │   │   ├── #{module} // image resource directory of a module
+  │   │   │   ├── #{main_image_asset}
+  │   │   │   ├── #{variant-dir} // image resource directory of a variant
+  │   │   │   │   ├── #{image_asset_variant}
+  │   │   │
+  │   │   ├── home // image resource directory of home module
+  │   │   │   ├── home_badge.svg
+  │   │   │   ├── home_icon.png
+  │   │   │   ├── 3.0x // image resource directory of a 3.0x-ratio-variant
+  │   │   │   │   ├── home_icon.png
+  │   │   │		
+  │   ├── texts // text resource directory
+  │   │   │     // (you can also break it down further by module)
+  │   │   └── test.json
+  │   │   └── test.yaml
+  │   │   │
+  │   ├── fonts // font resource directory of all font-families
+  │   │   ├── #{font-family} // font resource directory of a font-family
+  │   │   │   ├── #{font-family}-#{font_weight_or_style}.ttf
+  │   │   │
+  │   │   ├── Amiri // font resource directory of Amiri font-family
+  │   │   │   ├── Amiri-Regular.ttf
+  │   │   │   ├── Amiri-Bold.ttf
+  │   │   │   ├── Amiri-Italic.ttf
+  │   │   │   ├── Amiri-BoldItalic.ttf
+  │   ├── ..
+
+  ```
 
 
 **Big Attention,  the resource structure in the root directory of the font resource MUST follow the structure described above:** name the subdirectory with a font family name, and place the font resources of the font family in the subdirectory. Otherwise, `Flr` may not scan the font resource correctly.
 
-## Demo
+## Example
 
 ```yaml
 # pubspec.yaml
 ...
-
+# flutter-resource-structure-scheme-1 example:
 flr:
   core_version: 1.0.0
   # config the line length that is used to format r.g.dart
@@ -103,5 +143,19 @@ flr:
 ...
 ```
 
-[more detail](https://github.com/Fly-Mix/flutter_r_demo)
+You can get more details from the following examples：
+
+- [Flutter-R Demo](https://github.com/Fly-Mix/flutter_r_demo) 
+
+- [flutter_hello_app](https://github.com/Fly-Mix/flutter_hello_app)
+
+- [flutter_hello_module](https://github.com/Fly-Mix/flutter_hello_module)
+
+- [flutter_hello_package](https://github.com/Fly-Mix/flutter_hello_package)
+
+- [flutter_hello_plugin](https://github.com/Fly-Mix/flutter_hello_plugin)
+
+## License
+
+The extension is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
 

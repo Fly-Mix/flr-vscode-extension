@@ -172,16 +172,40 @@ export class FlrCodeUtil {
   }
 
   /*
-   * 为asset生成对应的注释；注释内容为资产在pubspec.yaml中的对应声明
+   * 为当前asset生成注释
+   *
+   * === Examples
+   * packageName = "flutter_r_demo"
+   *
+   * === Example-1
+   * asset = "packages/flutter_r_demo/assets/images/test.png"
+   * assetComment = "asset: lib/assets/images/test.png"
+   *
+   * === Example-2
+   * asset = "assets/images/test.png"
+   * assetComment = "asset: assets/images/test.png"
+   *
    * */
   public static generateAssetComment(
     asset: string,
     packageName: string
   ): string {
-    let packageInfo = "packages/" + packageName + "/";
-    let assetName = asset.replace(packageInfo, "");
-    let assetComment = "asset: " + assetName;
-    return assetComment;
+    let packagesPrefix = "packages/" + packageName + "/";
+    if (asset.startsWith(packagesPrefix)) {
+      // asset: packages/flutter_r_demo/assets/images/test.png
+      // to get assetName: assets/images/test.png
+      let assetName = asset.replace(packagesPrefix, "");
+
+      let assetComment = "asset: lib/" + assetName;
+      return assetComment;
+    } else {
+      // asset: assets/images/test.png
+      // to get assetName: assets/images/test.png
+      let assetName = asset;
+
+      let assetComment = "asset: " + assetName;
+      return assetComment;
+    }
   }
 
   /*
@@ -191,21 +215,51 @@ export class FlrCodeUtil {
     asset: string,
     assetIdDict: Map<string, string>,
     packageName: string,
+    isPackageProjectType: boolean,
     priorAssetType: string = ".*"
   ): string {
     let assetId = assetIdDict.get(asset);
     let assetComment = this.generateAssetComment(asset, packageName);
 
-    let packageInfo = "packages/" + packageName + "/";
-    let assetName = asset.replace(packageInfo, "");
+    var assetName = "";
+    var needPackage = false;
+
+    let packagesPrefix = "packages/" + packageName + "/";
+    if (asset.startsWith(packagesPrefix)) {
+      // asset: packages/flutter_r_demo/assets/images/test.png
+      // to get assetName: assets/images/test.png
+      assetName = asset.replace(packagesPrefix, "");
+      needPackage = true;
+    } else {
+      // asset: assets/images/test.png
+      // to get assetName: assets/images/test.png
+      assetName = asset;
+
+      if (isPackageProjectType) {
+        needPackage = true;
+      } else {
+        needPackage = false;
+      }
+    }
+
     // 对字符串中的 '$' 进行转义处理：'$' -> '\$'
+    // assetName: assets/images/test$.png
+    // to get escapedAssetName: assets/images/test\$.png
     let escapedAssetName = assetName.replace(/[$]/g, "\\$");
 
-    let code = `  /// ${assetComment}
-    // ignore: non_constant_identifier_names
-    final ${assetId} = const AssetResource("${escapedAssetName}", packageName: R.package);`;
+    if (needPackage) {
+      let code = `  /// ${assetComment}
+      // ignore: non_constant_identifier_names
+      final ${assetId} = const AssetResource("${escapedAssetName}", packageName: R.package);`;
 
-    return code;
+      return code;
+    } else {
+      let code = `  /// ${assetComment}
+      // ignore: non_constant_identifier_names
+      final ${assetId} = const AssetResource("${escapedAssetName}", packageName: null);`;
+
+      return code;
+    }
   }
 
   /*
@@ -214,7 +268,8 @@ export class FlrCodeUtil {
   public static generate__R_Image_AssetResource_class(
     nonSvgImageAssetArray: string[],
     nonSvgImageAssetIdDict: Map<string, string>,
-    packageName: string
+    packageName: string,
+    isPackageProjectType: boolean
   ): string {
     var all_g_AssetResource_property_code = "";
 
@@ -224,6 +279,7 @@ export class FlrCodeUtil {
         asset,
         nonSvgImageAssetIdDict,
         packageName,
+        isPackageProjectType,
         FlrConstant.PRIOR_NON_SVG_IMAGE_FILE_TYPE
       );
       all_g_AssetResource_property_code += g_AssetResource_property_code;
@@ -243,7 +299,8 @@ export class FlrCodeUtil {
   public static generate__R_Svg_AssetResource_class(
     svgImageAssetArray: string[],
     svgImageAssetIdDict: Map<string, string>,
-    packageName: string
+    packageName: string,
+    isPackageProjectType: boolean
   ): string {
     var all_g_AssetResource_property_code = "";
 
@@ -253,6 +310,7 @@ export class FlrCodeUtil {
         asset,
         svgImageAssetIdDict,
         packageName,
+        isPackageProjectType,
         FlrConstant.PRIOR_SVG_IMAGE_FILE_TYPE
       );
       all_g_AssetResource_property_code += g_AssetResource_property_code;
@@ -272,7 +330,8 @@ export class FlrCodeUtil {
   public static generate__R_Text_AssetResource_class(
     textAssetArray: string[],
     textAssetIdDict: Map<string, string>,
-    packageName: string
+    packageName: string,
+    isPackageProjectType: boolean
   ): string {
     var all_g_AssetResource_property_code = "";
 
@@ -282,6 +341,7 @@ export class FlrCodeUtil {
         asset,
         textAssetIdDict,
         packageName,
+        isPackageProjectType,
         FlrConstant.PRIOR_NON_SVG_IMAGE_FILE_TYPE
       );
       all_g_AssetResource_property_code += g_AssetResource_property_code;

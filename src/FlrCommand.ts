@@ -12,11 +12,11 @@ import { exec } from "child_process";
 export class FlrCommand {
   public static async init() {
     let flutterProjectRootDir = FlrFileUtil.getCurFlutterProjectRootDir();
-    let pubspecFile = FlrFileUtil.getPubspecFilePath();
-
-    if (flutterProjectRootDir === undefined || pubspecFile === undefined) {
+    if (flutterProjectRootDir === undefined) {
       return;
     }
+
+    let pubspecFile = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
 
     if (fs.existsSync(pubspecFile) === false) {
       return;
@@ -94,11 +94,12 @@ export class FlrCommand {
     }
 
     let flutterProjectRootDir = FlrFileUtil.getCurFlutterProjectRootDir();
-    let pubspecFile = FlrFileUtil.getPubspecFilePath();
 
-    if (flutterProjectRootDir === undefined || pubspecFile === undefined) {
+    if (flutterProjectRootDir === undefined) {
       return;
     }
+
+    let pubspecFile = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
 
     if (fs.existsSync(pubspecFile) === false) {
       return;
@@ -106,6 +107,10 @@ export class FlrCommand {
 
     let pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(pubspecFile);
     let packageName = pubspecConfig["name"];
+
+    let isPackageProjectType = FlrFileUtil.isPackageProjectType(
+      flutterProjectRootDir
+    );
 
     var imageAssetArray: string[] = new Array();
     var illegalImageFileArray: string[] = new Array();
@@ -206,7 +211,7 @@ export class FlrCommand {
             bAsset = "";
           }
 
-          return aAsset.localeCompare(bAsset);
+          return utils.caseInsensitiveComparator(aAsset, bAsset);
         });
 
         let fontFamilyConfig = {
@@ -229,7 +234,7 @@ export class FlrCommand {
           bFamily = "";
         }
 
-        return aFamily.localeCompare(bFamily);
+        return utils.caseInsensitiveComparator(aFamily, bFamily);
       });
     }
 
@@ -322,7 +327,8 @@ export class FlrCommand {
     let g__R_Image_AssetResource_class_code = FlrCodeUtil.generate__R_Image_AssetResource_class(
       nonSvgImageAssetArray,
       nonSvgImageAssetIdDict,
-      packageName
+      packageName,
+      isPackageProjectType
     );
     r_dart_file_content += g__R_Image_AssetResource_class_code;
 
@@ -330,7 +336,8 @@ export class FlrCommand {
     let g__R_Svg_AssetResource_class_code = FlrCodeUtil.generate__R_Svg_AssetResource_class(
       svgImageAssetArray,
       svgImageAssetIdDict,
-      packageName
+      packageName,
+      isPackageProjectType
     );
     r_dart_file_content += g__R_Svg_AssetResource_class_code;
 
@@ -338,7 +345,8 @@ export class FlrCommand {
     let g__R_Text_AssetResource_class_code = FlrCodeUtil.generate__R_Text_AssetResource_class(
       textAssetArray,
       textAssetIdDict,
-      packageName
+      packageName,
+      isPackageProjectType
     );
     r_dart_file_content += g__R_Text_AssetResource_class_code;
 
