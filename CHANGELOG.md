@@ -1,14 +1,17 @@
+## [2.0.1]
+
+- fixed resources path problem when using in windows [#2](https://github.com/Fly-Mix/flr-vscode-extension/issues/2)
+
 ## [2.0.0]
 
 - Support for processing non-implied resource file
 
-   > - non-implied resource file:  the resource file which is outside of `lib/` directory, for example:
-   >    - `~/path/to/flutter_r_demo/assets/images/test.png` 
-   >    - `~/path/to/flutter_r_demo/assets/images/3.0x/test.png`
-   > - implied resource file:  the resource file which is inside of  `lib/` directory, for example:
-   >    - `~/path/to/flutter_r_demo/lib/assets/images/hot_foot_N.png` 
-   >    - `~/path/to/flutter_r_demo/lib/assets/images/3.0x/hot_foot_N.png`
-
+  > - non-implied resource file: the resource file which is outside of `lib/` directory, for example:
+  >   - `~/path/to/flutter_r_demo/assets/images/test.png`
+  >   - `~/path/to/flutter_r_demo/assets/images/3.0x/test.png`
+  > - implied resource file: the resource file which is inside of `lib/` directory, for example:
+  >   - `~/path/to/flutter_r_demo/lib/assets/images/hot_foot_N.png`
+  >   - `~/path/to/flutter_r_demo/lib/assets/images/3.0x/hot_foot_N.png`
 
 ## [1.0.0] - Public Release
 
