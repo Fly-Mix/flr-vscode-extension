@@ -3,7 +3,7 @@
   "name": "flr",
   "displayName": "Flr",
   "description": "A Flutter Resource Manager VSCode Extension",
-  "icon": "resources/flr-icon.png",
+  "icon": "https://raw.githubusercontent.com/Fly-Mix/flr-vscode-extension/master/resources/flr-icon.png",
   "version": "2.0.0",
   "repository": "https://github.com/Fly-Mix/flr-vscode-extension",
   "license": "MIT",
