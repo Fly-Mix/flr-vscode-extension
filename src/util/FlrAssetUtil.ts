@@ -1,6 +1,7 @@
 import * as path from "path";
 import * as fs from "fs";
 import { FlrFileUtil } from "./FlrFileUtil";
+import * as glob from "glob";
 
 export class FlrAssetUtil {
   /*
@@ -26,6 +27,182 @@ export class FlrAssetUtil {
         return true;
       }
     }
+    return false;
+  }
+
+  /*
+   * 判断当前资产是不是图片类资产
+   *
+   * === Examples
+   *
+   * === Example-1
+   * asset = "packages/flutter_r_demo/assets/images/test.png"
+   * @return true
+   *
+   * === Example-2
+   * asset = "assets/images/test.png"
+   * @return true
+   *
+   * */
+  public static isImageAsset(asset: string): boolean {
+    if (FlrFileUtil.isNonSvgImageResourceFile(asset)) {
+      return true;
+    }
+    return false;
+  }
+
+  /*
+   * 判断当前资产是不是package类资产
+   *
+   * === Examples
+   *
+   * === Example-1
+   * asset = "packages/flutter_r_demo/assets/images/test.png"
+   * @return true
+   *
+   * === Example-2
+   * asset = "assets/images/test.png"
+   * @return false
+   *
+   * */
+  public static isPackageAsset(asset: string): boolean {
+    let packagePrefix = "packages/";
+    if (asset.startsWith(packagePrefix)) {
+      return true;
+    }
+
+    return false;
+  }
+  /*
+   * 判断当前资产是不是指定的package的资产
+   *
+   * === Examples
+   *
+   * === Example-1
+   * asset = "packages/flutter_r_demo/assets/images/test.png"
+   * @return true
+   *
+   * === Example-2
+   * asset = "assets/images/test.png"
+   * @return false
+   *
+   * */
+  public static isSpecifiedPackageAsset(
+    packageName: string,
+    asset: string
+  ): boolean {
+    let specifiedPackagePrefix = "packages/" + packageName + "/";
+    if (asset.startsWith(specifiedPackagePrefix)) {
+      return true;
+    }
+    return false;
+  }
+
+  /*
+   * 获取指定flutter工程的asset对应的主资源文件
+   * 注意：主资源文件不一定存在，比如图片资产可能只存在变体资源文件
+   *
+   * === Examples
+   * flutter_project_dir = "~/path/to/flutter_r_demo"
+   * package_name = "flutter_r_demo"
+   *
+   * === Example-1
+   * asset = "packages/flutter_r_demo/assets/images/test.png"
+   * main_resource_file = "~/path/to/flutter_r_demo/lib/assets/images/test.png"
+   *
+   * === Example-2
+   * asset = "assets/images/test.png"
+   * main_resource_file = "~/path/to/flutter_r_demo/assets/images/test.png"
+   *
+   * */
+  public static getMainResourceFile(
+    flutterProjectDir: string,
+    packageName: string,
+    asset: string
+  ): string {
+    if (this.isSpecifiedPackageAsset(packageName, asset)) {
+      let specifiedPackagePrefix = "packages/" + packageName + "/";
+
+      // asset: packages/flutter_r_demo/assets/images/test.png
+      // to get impliedRelativeResourceFile: lib/assets/images/test.png
+      let specifiedPackagePrefixRegex = new RegExp(
+        `^${specifiedPackagePrefix}`
+      );
+      let impliedRelativeResourceFile = asset.replace(
+        specifiedPackagePrefixRegex,
+        ""
+      );
+      impliedRelativeResourceFile = "lib/" + impliedRelativeResourceFile;
+
+      // mainResourceFile:  ~/path/to/flutter_r_demo/lib/assets/images/test.png
+      let mainResourceFile =
+        flutterProjectDir + "/" + impliedRelativeResourceFile;
+      return mainResourceFile;
+    } else {
+      // asset: assets/images/test.png
+      // mainResourceFile:  ~/path/to/flutter_r_demo/assets/images/test.png
+      let mainResourceFile = flutterProjectDir + "/" + asset;
+      return mainResourceFile;
+    }
+  }
+
+  /*
+   * 判断指定flutter工程的asset是不是存在；存在的判断标准是：asset需要存在对应的资源文件
+   *
+   * === Examples
+   * flutter_project_dir = "~/path/to/flutter_r_demo"
+   * package_name = "flutter_r_demo"
+   *
+   * === Example-1
+   * asset = "packages/flutter_r_demo/assets/images/test.png"
+   * @return true
+   *
+   * === Example-2
+   * asset = "packages/flutter_r_demo/404/not-existed.png"
+   * @return false
+   *
+   * */
+  public static isAssetExisted(
+    flutterProjectDir: string,
+    packageName: string,
+    asset: string
+  ): boolean {
+    // 处理指定flutter工程的asset
+    // 1. 获取asset对应的main_resource_file
+    // 2. 若main_resource_file是非SVG类图片资源文件，判断asset是否存在的标准是：主资源文件或者至少一个变体资源文件存在
+    // 3. 若main_resource_file是SVG类图片资源文件或者其他资源文件，判断asset是否存在的标准是：主资源文件存在
+    //
+
+    let mainResourceFile = this.getMainResourceFile(
+      flutterProjectDir,
+      packageName,
+      asset
+    );
+    if (FlrFileUtil.isNonSvgImageResourceFile(mainResourceFile)) {
+      if (fs.existsSync(mainResourceFile)) {
+        return true;
+      }
+
+      let fileBaseName = path.basename(mainResourceFile);
+      let fileDir = path.dirname(mainResourceFile);
+      var didFindVariantResourceFile = false;
+      // example: path/to/dir/*/file.png
+      let fileRegx = `${fileDir}/*/${fileBaseName}`;
+      glob.sync(fileRegx).forEach((file) => {
+        if (this.isAssetVariant(file)) {
+          didFindVariantResourceFile = true;
+        }
+      });
+
+      if (didFindVariantResourceFile) {
+        return true;
+      }
+    } else {
+      if (fs.existsSync(mainResourceFile)) {
+        return true;
+      }
+    }
+
     return false;
   }
 
@@ -191,5 +368,56 @@ export class FlrAssetUtil {
     });
 
     return fontAssetConfigArray;
+  }
+
+  /*
+   * 合并新旧2个asset数组：
+   * - old_asset_array - new_asset_array = diff_asset_array，获取old_asset_array与new_asset_array的差异集合
+   * - 遍历diff_asset_array，筛选合法的asset得到legal_old_asset_array；合法的asset标准是：非图片资源 + 存在对应的资源文件
+   * - 按照字典序对legal_old_asset_array进行排序，并追加到new_asset_array
+   * - 返回合并结果merged_asset_array
+   *
+   * === Examples
+   * flutter_project_dir = "~/path/to/flutter_r_demo"
+   * package_name = "flutter_r_demo"
+   * new_asset_array = ["packages/flutter_r_demo/assets/images/test.png", "packages/flutter_r_demo/assets/jsons/test.json"]
+   * old_asset_array = ["packages/flutter_r_demo/assets/htmls/test.html"]
+   * merged_asset_array = ["packages/flutter_r_demo/assets/images/test.png", "packages/flutter_r_demo/assets/jsons/test.json", "packages/flutter_r_demo/assets/htmls/test.html"]
+   *
+   *  */
+  public static mergeFlutterAssets(
+    flutterProjectDir: string,
+    packageName: string,
+    newAssetArray: string[],
+    oldAssetArray: string[]
+  ): string[] {
+    var legalOldAssetArray: string[] = new Array();
+
+    var diffAssetArray = oldAssetArray.filter((asset) => {
+      return !newAssetArray.includes(asset);
+    });
+    diffAssetArray.forEach((asset) => {
+      // 若是第三方package的资源，newAssetArray
+      // 引用第三方package的资源的推荐做法是：通过引用第三方package的R类来访问
+      if (this.isPackageAsset(asset)) {
+        if (!this.isSpecifiedPackageAsset(packageName, asset)) {
+          legalOldAssetArray.push(asset);
+          return;
+        }
+      }
+
+      // 处理指定flutter工程的asset
+      // 1. 判断asset是否存在
+      // 2. 若asset存在，则合并到new_asset_array
+      //
+      if (this.isAssetExisted(flutterProjectDir, packageName, asset)) {
+        legalOldAssetArray.push(asset);
+        return;
+      }
+    });
+
+    legalOldAssetArray.sort();
+    let mergedAssetArray = newAssetArray.concat(legalOldAssetArray);
+    return mergedAssetArray;
   }
 }

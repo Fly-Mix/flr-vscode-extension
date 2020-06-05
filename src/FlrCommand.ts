@@ -261,8 +261,23 @@ export class FlrCommand {
 
     let flutterConfig = pubspecConfig["flutter"];
 
-    var assetArray: string[] = new Array();
-    assetArray = assetArray.concat(imageAssetArray, textAssetArray);
+    var newAssetArray: string[] = new Array();
+    newAssetArray = newAssetArray.concat(imageAssetArray, textAssetArray);
+
+    var oldAssetArray: string[] = new Array();
+    if (flutterConfig.hasOwnProperty("assets")) {
+      let assets = flutterConfig["assets"];
+      if (Array.isArray(assets)) {
+        oldAssetArray = assets;
+      }
+    }
+
+    let assetArray: string[] = FlrAssetUtil.mergeFlutterAssets(
+      flutterProjectRootDir,
+      packageName,
+      newAssetArray,
+      oldAssetArray
+    );
     if (assetArray.length > 0) {
       flutterConfig["assets"] = assetArray;
     } else {
