@@ -20,7 +20,6 @@ export class FileExplorer {
       let fileBasename = path.basename(file);
       return fileBasename === utils.Names.pubspec;
     });
-    // TODO: 显示所有pubspec.yaml @林肯
     this.fileExplorer = vscode.window.createTreeView(utils.Names.flr, {
       treeDataProvider,
     });
