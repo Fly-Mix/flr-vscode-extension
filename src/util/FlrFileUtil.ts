@@ -7,15 +7,30 @@ import * as FlrConstant from "../FlrConstant";
 
 export class FlrFileUtil {
   /*
-   * 获取当前flutter工程的根目录
+   * 获取flutter主工程的根目录
    */
-  public static getCurFlutterProjectRootDir(): string | undefined {
+  public static getFlutterMainProjectRootDir(): string | undefined {
     let folders = vscode.workspace.workspaceFolders;
     if (folders) {
       let root = folders[0].uri.fsPath;
       return root;
     }
     return undefined;
+  }
+
+  /*
+   * 获取flutter主工程的所有子工程的根目录
+   */
+  public static getFlutterSubProjectRootDirs(
+    flutterMainProjectRootDir: string
+  ): string[] {
+    var flutterSubProjectRootDirArray: string[] = new Array();
+    let fileRegx = `${flutterMainProjectRootDir}/*/pubspec.yaml`;
+    glob.sync(fileRegx).forEach((file) => {
+      let fileDir = path.dirname(file);
+      flutterSubProjectRootDirArray.push(fileDir);
+    });
+    return flutterSubProjectRootDirArray;
   }
 
   /*

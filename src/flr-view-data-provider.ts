@@ -125,7 +125,7 @@ export class FileExplorer {
   }
 
   private invokeFlrGenerateCmd() {
-    let flutterProjectRootDir = FlrFileUtil.getCurFlutterProjectRootDir();
+    let flutterProjectRootDir = FlrFileUtil.getFlutterMainProjectRootDir();
     let assetsResourceDirs = this.assetsRelativeResourceDirs.map(
       (relativeResourceDir) => {
         let resourceDir = flutterProjectRootDir + "/" + relativeResourceDir;
@@ -157,7 +157,7 @@ export class FileExplorer {
       let assets = flr["assets"];
       let fonts = flr["fonts"];
 
-      let flutterProjectRootDir = FlrFileUtil.getCurFlutterProjectRootDir();
+      let flutterProjectRootDir = FlrFileUtil.getFlutterMainProjectRootDir();
       if (assets !== null && assets !== undefined) {
         this.assetsRelativeResourceDirs = new Array();
         const vals = Object.values<string>(assets);

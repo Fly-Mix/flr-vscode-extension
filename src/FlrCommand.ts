@@ -10,12 +10,34 @@ import { FlrCodeUtil } from "./util/FlrCodeUtil";
 import { exec } from "child_process";
 
 export class FlrCommand {
-  public static async init() {
-    let flutterProjectRootDir = FlrFileUtil.getCurFlutterProjectRootDir();
-    if (flutterProjectRootDir === undefined) {
+  public static async initAll() {
+    // 检测当前flutter主工程根目录是否存在 pubspec.yaml；若不存在说明不是flutter工程
+    let flutterMainProjectRootDir = FlrFileUtil.getFlutterMainProjectRootDir();
+    if (flutterMainProjectRootDir === undefined) {
+      return;
+    }
+    let mainProjectPubspecFile = FlrFileUtil.getPubspecFilePath(
+      flutterMainProjectRootDir
+    );
+    if (fs.existsSync(mainProjectPubspecFile) === false) {
       return;
     }
 
+    // 获取主工程和其所有子工程，对它们进行initOne操作
+    let flutterSubProjectRootDirArray = FlrFileUtil.getFlutterSubProjectRootDirs(
+      flutterMainProjectRootDir
+    );
+    this.initOne(flutterMainProjectRootDir);
+    flutterSubProjectRootDirArray.forEach((flutterProjectRootDir) => {
+      this.initOne(flutterProjectRootDir);
+    });
+
+    vscode.window.showInformationMessage(
+      `adds flr config for all flutter projects done`
+    );
+  }
+
+  public static async initOne(flutterProjectRootDir: string) {
     let pubspecFile = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
 
     if (fs.existsSync(pubspecFile) === false) {
@@ -27,7 +49,6 @@ export class FlrCommand {
     var flrAssets = [];
     var flrFonts = [];
     if (pubspecConfig.hasOwnProperty("flr")) {
-      vscode.window.showInformationMessage(`Already had flr config`);
       let oldFlrConfig = pubspecConfig["flr"];
 
       if (oldFlrConfig.hasOwnProperty("dartfmt_line_length")) {
@@ -81,6 +102,8 @@ export class FlrCommand {
     pubspecConfig["dependencies"] = dependenciesConfig;
 
     FlrFileUtil.dumpPubspecConfigToFile(pubspecConfig, pubspecFile);
+
+    return;
   }
 
   public static async generate(
@@ -93,7 +116,7 @@ export class FlrCommand {
       return;
     }
 
-    let flutterProjectRootDir = FlrFileUtil.getCurFlutterProjectRootDir();
+    let flutterProjectRootDir = FlrFileUtil.getFlutterMainProjectRootDir();
 
     if (flutterProjectRootDir === undefined) {
       return;

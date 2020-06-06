@@ -15,7 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   function checkFlrFile(): Promise<boolean> {
     return new Promise<boolean>((success, failure) => {
-      let flutterProjectRootDir = FlrFileUtil.getCurFlutterProjectRootDir();
+      let flutterProjectRootDir = FlrFileUtil.getFlutterMainProjectRootDir();
       if (flutterProjectRootDir === undefined) {
         success(false);
         return;
@@ -51,7 +51,7 @@ export function activate(context: vscode.ExtensionContext) {
     fp?.refreshGeneratedResource();
   });
   utils.registerCommandNice(context, utils.Commands.init, async () => {
-    FlrCommand.init();
+    FlrCommand.initAll();
   });
   fp = new FileExplorer(context);
   checkFlrFile();
