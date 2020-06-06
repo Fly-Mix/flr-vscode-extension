@@ -255,6 +255,9 @@ export class FileSystemProvider
       };
       flrEntries.push(entry);
     });
+    flrEntries.sort((a: flrPathMan.Entry, b: flrPathMan.Entry) => {
+      return a.label.length - b.label.length;
+    });
     return flrEntries;
   }
 
