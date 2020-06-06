@@ -21,7 +21,7 @@
     "commands": [
       {
         "command": "flr.init",
-        "title": "Create Flrfile.yaml",
+        "title": "Add Flr Config",
         "icon": {
           "light": "resources/light/add.svg",
           "dark": "resources/dark/add.svg"
