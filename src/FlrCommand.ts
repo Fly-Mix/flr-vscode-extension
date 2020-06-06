@@ -106,25 +106,47 @@ export class FlrCommand {
     return;
   }
 
-  public static async generate(
-    assetsResourceDirs: string[],
-    fontsResourceDirs: string[]
-  ) {
+  public static async generateAll() {
+    // 检测当前flutter主工程根目录是否存在 pubspec.yaml；若不存在说明不是flutter工程
+    let flutterMainProjectRootDir = FlrFileUtil.getFlutterMainProjectRootDir();
+    if (flutterMainProjectRootDir === undefined) {
+      return;
+    }
+    let mainProjectPubspecFile = FlrFileUtil.getPubspecFilePath(
+      flutterMainProjectRootDir
+    );
+    if (fs.existsSync(mainProjectPubspecFile) === false) {
+      return;
+    }
+
+    // 获取主工程和其所有子工程，对它们进行generateOne操作
+    let flutterSubProjectRootDirArray = FlrFileUtil.getFlutterSubProjectRootDirs(
+      flutterMainProjectRootDir
+    );
+    this.generateOne(flutterMainProjectRootDir);
+    flutterSubProjectRootDirArray.forEach((flutterProjectRootDir) => {
+      this.generateOne(flutterProjectRootDir);
+    });
+
+    vscode.window.showInformationMessage(
+      `generate for all flutter projects done`
+    );
+  }
+
+  public static async generateOne(flutterProjectRootDir: string) {
+    let pubspecFile = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
+    if (fs.existsSync(pubspecFile) === false) {
+      return;
+    }
+
+    let resourceDirResultTuple = FlrFileUtil.getFlrResourceDirs(
+      flutterProjectRootDir
+    );
+    let assetsResourceDirs: string[] = resourceDirResultTuple[0];
+    let fontsResourceDirs: string[] = resourceDirResultTuple[1];
     let validResourceDirCount =
       assetsResourceDirs.length + fontsResourceDirs.length;
     if (validResourceDirCount === 0) {
-      return;
-    }
-
-    let flutterProjectRootDir = FlrFileUtil.getFlutterMainProjectRootDir();
-
-    if (flutterProjectRootDir === undefined) {
-      return;
-    }
-
-    let pubspecFile = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
-
-    if (fs.existsSync(pubspecFile) === false) {
       return;
     }
 

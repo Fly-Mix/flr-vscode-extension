@@ -125,20 +125,7 @@ export class FileExplorer {
   }
 
   private invokeFlrGenerateCmd() {
-    let flutterProjectRootDir = FlrFileUtil.getFlutterMainProjectRootDir();
-    let assetsResourceDirs = this.assetsRelativeResourceDirs.map(
-      (relativeResourceDir) => {
-        let resourceDir = flutterProjectRootDir + "/" + relativeResourceDir;
-        return resourceDir;
-      }
-    );
-    let fontsResourceDirs = this.fontsRelativeResourceDirs.map(
-      (relativeResourceDir) => {
-        let resourceDir = flutterProjectRootDir + "/" + relativeResourceDir;
-        return resourceDir;
-      }
-    );
-    FlrCommand.generate(assetsResourceDirs, fontsResourceDirs);
+    FlrCommand.generateAll();
   }
 
   private openResource(resource: vscode.Uri) {
