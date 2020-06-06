@@ -19,6 +19,7 @@ export class FileExplorer {
       // only show flrfile
       return name === utils.Names.pubspec;
     });
+    // TODO: 显式所有pubspec.yaml @林肯
     this.fileExplorer = vscode.window.createTreeView(utils.Names.flr, {
       treeDataProvider,
     });
@@ -67,6 +68,7 @@ export class FileExplorer {
       return;
     }
     let uri = raw!;
+    // TODO: 监控所有pubspec.yaml的更改 @林肯
     let flrUri = vscode.Uri.file(path.join(uri.fsPath, utils.Names.pubspec));
     const watcher = fs.watch(
       uri.fsPath,
@@ -120,7 +122,7 @@ export class FileExplorer {
     }
     let uri = raw!;
     let pubspec = path.join(uri.fsPath, utils.Names.pubspec);
-    this.refreshMonitorPath(vscode.Uri.file(pubspec));
+    this.refreshMonitorPath();
     this.invokeFlrGenerateCmd();
   }
 
@@ -132,44 +134,65 @@ export class FileExplorer {
     vscode.window.showTextDocument(resource);
   }
 
-  private refreshMonitorPath(resource: vscode.Uri) {
-    // enabled
-    // read pubspec.yaml
-    // get folder that needed to be watched
-    // watch change and update pubspec.yaml, generate R.dart
-    try {
-      let fileContents = fs.readFileSync(resource.fsPath, "utf8");
-      let data = yaml.safeLoad(fileContents);
-      let flr = data["flr"];
-      let assets = flr["assets"];
-      let fonts = flr["fonts"];
-
-      let flutterProjectRootDir = FlrFileUtil.getFlutterMainProjectRootDir();
-      if (assets !== null && assets !== undefined) {
-        this.assetsRelativeResourceDirs = new Array();
-        const vals = Object.values<string>(assets);
-        for (const val of vals) {
-          this.assetsRelativeResourceDirs.push(val);
-        }
-      }
-
-      if (fonts !== null && fonts !== undefined) {
-        this.fontsRelativeResourceDirs = new Array();
-        const vals = Object.values<string>(fonts);
-        for (const val of vals) {
-          this.fontsRelativeResourceDirs.push(val);
-        }
-      }
-    } catch (e) {
-      vscode.window.showErrorMessage(e);
+  private refreshMonitorPath() {
+    let flutterMainProjectRootDir = FlrFileUtil.getFlutterMainProjectRootDir();
+    if (flutterMainProjectRootDir === undefined) {
+      return;
     }
+    let mainProjectPubspecFile = FlrFileUtil.getPubspecFilePath(
+      flutterMainProjectRootDir
+    );
+    if (fs.existsSync(mainProjectPubspecFile) === false) {
+      return;
+    }
+
+    // 获取主工程和其所有子工程，然后读取所有工程的pubspec.yaml，获得需要监控的资源目录
+
+    // 处理主工程
+    let resourceDirResultTuple = FlrFileUtil.getFlrRelativeResourceDirs(
+      flutterMainProjectRootDir
+    );
+    let assetsRelativeResourceSubDirs: string[] = resourceDirResultTuple[0];
+    let fontsRelativeResourceSubDirs: string[] = resourceDirResultTuple[1];
+    assetsRelativeResourceSubDirs.forEach((dir) => {
+      this.assetsRelativeResourceDirs.push(dir);
+    });
+    fontsRelativeResourceSubDirs.forEach((dir) => {
+      this.fontsRelativeResourceDirs.push(dir);
+    });
+
+    // 处理子工程
+    let flutterSubProjectRootDirArray = FlrFileUtil.getFlutterSubProjectRootDirs(
+      flutterMainProjectRootDir
+    );
+    flutterSubProjectRootDirArray.forEach((flutterProjectRootDir) => {
+      let resourceDirResultTuple = FlrFileUtil.getFlrRelativeResourceDirs(
+        flutterProjectRootDir
+      );
+      let assetsRelativeResourceSubDirs: string[] = resourceDirResultTuple[0];
+      let fontsRelativeResourceSubDirs: string[] = resourceDirResultTuple[1];
+
+      assetsRelativeResourceSubDirs.forEach((relativeDirInSubProject) => {
+        let subProjectRootDirName = path.basename(flutterProjectRootDir);
+        let relativeDirInMainProject =
+          subProjectRootDirName + "/" + relativeDirInSubProject;
+        this.assetsRelativeResourceDirs.push(relativeDirInMainProject);
+      });
+
+      fontsRelativeResourceSubDirs.forEach((relativeDirInSubProject) => {
+        let subProjectRootDirName = path.basename(flutterProjectRootDir);
+        let relativeDirInMainProject =
+          subProjectRootDirName + "/" + relativeDirInSubProject;
+        this.fontsRelativeResourceDirs.push(relativeDirInMainProject);
+      });
+    });
   }
 
   toggleMonitor(toValue: boolean, resource: vscode.Uri) {
     utils.switchControl(utils.ControlFlags.isMonitorEnabled, toValue);
 
     if (toValue) {
-      this.refreshMonitorPath(resource);
+      this.refreshMonitorPath();
     } else {
       // disabled
       // stop all watcher

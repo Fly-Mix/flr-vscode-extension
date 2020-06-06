@@ -42,7 +42,7 @@ export class FlrFileUtil {
   }
 
   /*
-   * 获取当前flutter工程的flr配置资源目录
+   * 获取当前flutter工程的flr配置资源目录（全路径）
    *
    * @return resourceDirResultTuple = [assetsResourceDirs, fontsResourceDirs]
    */
@@ -78,6 +78,43 @@ export class FlrFileUtil {
     }
 
     let resourceDirResultTuple = [assetsResourceDirs, fontsResourceDirs];
+    return resourceDirResultTuple;
+  }
+
+  /*
+   * 获取当前flutter工程的flr配置资源目录（相对路径）
+   *
+   * @return resourceDirResultTuple = [assetsRelativeResourceDirs, fontsRelativeResourceDirs]
+   */
+  public static getFlrRelativeResourceDirs(
+    flutterProjectRootDir: string
+  ): string[][] {
+    var assetsRelativeResourceDirs: string[] = new Array();
+    var fontsRelativeResourceDirs: string[] = new Array();
+
+    try {
+      let pubspecFilePath = this.getPubspecFilePath(flutterProjectRootDir);
+      let fileContents = fs.readFileSync(pubspecFilePath, "utf8");
+      let data = yaml.safeLoad(fileContents);
+      let flr = data["flr"];
+      let assets = flr["assets"];
+      let fonts = flr["fonts"];
+
+      if (assets !== null && assets !== undefined) {
+        assetsRelativeResourceDirs = Object.values<string>(assets);
+      }
+
+      if (fonts !== null && fonts !== undefined) {
+        fontsRelativeResourceDirs = Object.values<string>(fonts);
+      }
+    } catch (e) {
+      vscode.window.showErrorMessage(e);
+    }
+
+    let resourceDirResultTuple = [
+      assetsRelativeResourceDirs,
+      fontsRelativeResourceDirs,
+    ];
     return resourceDirResultTuple;
   }
 
