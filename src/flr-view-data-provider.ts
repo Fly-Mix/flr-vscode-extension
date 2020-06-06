@@ -49,7 +49,17 @@ export class FileExplorer {
     this.startWatching();
   }
 
-  private refresh() {}
+  private refresh() {
+    // 重新加载Flr视图
+    const treeDataProvider = new FileSystemProvider((file) => {
+      // only show all pubspec.yaml
+      let fileBasename = path.basename(file);
+      return fileBasename === utils.Names.pubspec;
+    });
+    this.fileExplorer = vscode.window.createTreeView(utils.Names.flr, {
+      treeDataProvider,
+    });
+  }
 
   /// watching current workspace file change to reload FLR
   private startWatching() {
@@ -185,6 +195,7 @@ export class FileExplorer {
 
     if (toValue) {
       this.refreshMonitorPath();
+      this.refreshGeneratedResource();
     } else {
       // disabled
       // stop all watcher
@@ -192,7 +203,6 @@ export class FileExplorer {
       this.fontsRelativeResourceDirs = new Array();
     }
     this.refresh();
-    this.refreshGeneratedResource();
   }
 }
 
