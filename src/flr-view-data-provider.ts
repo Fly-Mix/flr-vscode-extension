@@ -218,15 +218,34 @@ export class FileSystemProvider
 
     // 显示所有的pubspec.yaml
     let flutterMainProjectRootDir = FlrFileUtil.getFlutterMainProjectRootDir();
-    if (flutterMainProjectRootDir) {
-      let ret = await flrPathMan.FolderManager.getAllPubspecFiles();
-      return ret.map(([file, type]) => ({
-        uri: vscode.Uri.file(file),
-        type,
-      }));
+    if (flutterMainProjectRootDir === undefined) {
+      return [];
     }
 
-    return [];
+    let ret = await flrPathMan.FolderManager.getAllPubspecFiles();
+    var flrEntries: any[] = [];
+    ret.map(([file, type]) => {
+      let fileBasename = path.basename(file);
+      let fileDir = path.dirname(file);
+      let fileDirname = path.basename(fileDir);
+      let flutterMainProjectRootDirname = path.basename(
+        flutterMainProjectRootDir!
+      );
+      var label = fileBasename;
+      if (
+        fileDirname !== undefined &&
+        fileDirname !== flutterMainProjectRootDirname
+      ) {
+        label = fileDirname + "/" + fileBasename;
+      }
+      let entry = {
+        uri: vscode.Uri.file(file),
+        label: label,
+        type,
+      };
+      flrEntries.push(entry);
+    });
+    return flrEntries;
   }
 
   getTreeItem(element: flrPathMan.Entry): vscode.TreeItem {
@@ -243,6 +262,7 @@ export class FileSystemProvider
         arguments: [element.uri],
       };
       treeItem.contextValue = "file";
+      treeItem.label = element.label;
     }
     return treeItem;
   }
