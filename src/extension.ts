@@ -40,7 +40,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         if (legalResourceDirCount > 0) {
-          fp?.toggleMonitor(true, vscode.Uri.file(pubspecFile));
+          fp?.toggleMonitor(true);
         }
       }
     });

@@ -12,14 +12,15 @@ export class FileExplorer {
   private fileExplorer: vscode.TreeView<flrPathMan.Entry>;
   private assetsRelativeResourceDirs: string[];
   private fontsRelativeResourceDirs: string[];
-  private fileMD5: string = "";
+  private pubspecFileMd5Map: Map<string, string> = new Map();
 
   constructor(context: vscode.ExtensionContext) {
-    const treeDataProvider = new FileSystemProvider((name) => {
-      // only show flrfile
-      return name === utils.Names.pubspec;
+    const treeDataProvider = new FileSystemProvider((file) => {
+      // only show all pubspec.yaml
+      let fileBasename = path.basename(file);
+      return fileBasename === utils.Names.pubspec;
     });
-    // TODO: 显式所有pubspec.yaml @林肯
+    // TODO: 显示所有pubspec.yaml @林肯
     this.fileExplorer = vscode.window.createTreeView(utils.Names.flr, {
       treeDataProvider,
     });
@@ -35,28 +36,21 @@ export class FileExplorer {
       context,
       utils.Commands.stopMonitor,
       (resource) => {
-        this.toggleMonitor(false, resource.uri);
+        this.toggleMonitor(false);
       }
     );
     utils.registerCommandNice(
       context,
       utils.Commands.startMonotor,
       (resource) => {
-        this.toggleMonitor(true, resource.uri);
+        this.toggleMonitor(true);
       }
     );
 
     this.startWatching();
   }
 
-  private refresh() {
-    const treeDataProvider = new FileSystemProvider((name) => {
-      return name === utils.Names.pubspec;
-    });
-    this.fileExplorer = vscode.window.createTreeView(utils.Names.flr, {
-      treeDataProvider,
-    });
-  }
+  private refresh() {}
 
   /// watching current workspace file change to reload FLR
   private startWatching() {
@@ -68,42 +62,43 @@ export class FileExplorer {
       return;
     }
     let uri = raw!;
-    // TODO: 监控所有pubspec.yaml的更改 @林肯
-    let flrUri = vscode.Uri.file(path.join(uri.fsPath, utils.Names.pubspec));
     const watcher = fs.watch(
       uri.fsPath,
       { recursive: true },
-      async (event: string, filename: string | Buffer) => {
-        if (filename === utils.Names.pubspec) {
+      async (event: string, file: string) => {
+        let fileBasename = path.basename(file);
+        if (fileBasename === utils.Names.pubspec) {
           // if isdelete, stop watcher
           // if is add, start watcher
           // if change, conditional restart watcher
           try {
-            let fileContents = fs.readFileSync(flrUri.fsPath, "utf8");
+            let pubspecFileUri = vscode.Uri.file(path.join(uri.fsPath, file));
+            let fileContents = fs.readFileSync(pubspecFileUri.fsPath, "utf8");
             let currentMD5 = md5(fileContents);
-            if (currentMD5 === this.fileMD5) {
+            let curPubspecFileMd5 = this.pubspecFileMd5Map.get(file);
+            if (currentMD5 === curPubspecFileMd5) {
               return;
             }
-            this.fileMD5 = currentMD5;
+            this.pubspecFileMd5Map.set(file, currentMD5);
           } catch (_) {}
           if (event === "change") {
             // compare md5 before and after, stop looping
-            this.toggleMonitor(true, flrUri);
+            this.toggleMonitor(true);
           } else {
-            flrPathMan.FolderManager.getPubspec().then((result) => {
-              this.toggleMonitor(result.length > 0, flrUri);
+            flrPathMan.FolderManager.getAllPubspecFiles().then((result) => {
+              this.toggleMonitor(result.length > 0);
             });
           }
           this.refresh();
         } else {
           let isAssetsResourceDirDirty =
             this.assetsRelativeResourceDirs.filter(
-              (path) => filename.lastIndexOf(path, 0) === 0
+              (path) => file.lastIndexOf(path, 0) === 0
             ).length > 0;
 
           let isFontsResourceDirDirty =
             this.fontsRelativeResourceDirs.filter(
-              (path) => filename.lastIndexOf(path, 0) === 0
+              (path) => file.lastIndexOf(path, 0) === 0
             ).length > 0;
 
           let isDirty = isAssetsResourceDirDirty || isFontsResourceDirDirty;
@@ -120,8 +115,6 @@ export class FileExplorer {
     if (raw === undefined) {
       return;
     }
-    let uri = raw!;
-    let pubspec = path.join(uri.fsPath, utils.Names.pubspec);
     this.refreshMonitorPath();
     this.invokeFlrGenerateCmd();
   }
@@ -188,7 +181,7 @@ export class FileExplorer {
     });
   }
 
-  toggleMonitor(toValue: boolean, resource: vscode.Uri) {
+  toggleMonitor(toValue: boolean) {
     utils.switchControl(utils.ControlFlags.isMonitorEnabled, toValue);
 
     if (toValue) {
@@ -214,23 +207,22 @@ export class FileSystemProvider
   // tree data provider
 
   async getChildren(element?: flrPathMan.Entry): Promise<flrPathMan.Entry[]> {
-    if (element) {
-      const children = await flrPathMan.FolderManager.readDirectory(
-        element.uri
-      );
-      return children.map(([name, type]) => ({
-        uri: vscode.Uri.file(path.join(element.uri.fsPath, name)),
-        type,
-      }));
-    }
+    // if (element) {
+    //   const children = await flrPathMan.FolderManager.readDirectory(
+    //     element.uri
+    //   );
+    //   return children.map(([name, type]) => ({
+    //     uri: vscode.Uri.file(path.join(element.uri.fsPath, name)),
+    //     type,
+    //   }));
+    // }
 
-    const workspaceFolder = vscode.workspace.workspaceFolders?.filter(
-      (folder) => folder.uri.scheme === "file"
-    )[0];
-    if (workspaceFolder) {
-      let ret = await flrPathMan.FolderManager.getPubspec();
-      return ret.map(([name, type]) => ({
-        uri: vscode.Uri.file(path.join(workspaceFolder.uri.fsPath, name)),
+    // 显示所有的pubspec.yaml
+    let flutterMainProjectRootDir = FlrFileUtil.getFlutterMainProjectRootDir();
+    if (flutterMainProjectRootDir) {
+      let ret = await flrPathMan.FolderManager.getAllPubspecFiles();
+      return ret.map(([file, type]) => ({
+        uri: vscode.Uri.file(file),
         type,
       }));
     }
