@@ -74,7 +74,19 @@ export class FlrFileUtil {
         });
       }
     } catch (e) {
-      vscode.window.showErrorMessage(e);
+      let flutterMainProjectRootDir = this.getFlutterMainProjectRootDir();
+      var pubspecFile = "pubspec.yaml";
+      if (flutterProjectRootDir !== flutterMainProjectRootDir) {
+        let subProjectRootDirname = path.basename(flutterProjectRootDir);
+        pubspecFile = `${subProjectRootDirname}/${pubspecFile}`;
+      }
+      if (e instanceof yaml.YAMLException) {
+        let msg = `${pubspecFile} is damaged with syntax error: \n ${e.message}`;
+        vscode.window.showErrorMessage(msg);
+      } else {
+        let msg = `${pubspecFile} is damaged with some error: \n ${e}`;
+        vscode.window.showErrorMessage(msg);
+      }
     }
 
     let resourceDirResultTuple = [assetsResourceDirs, fontsResourceDirs];
@@ -108,7 +120,19 @@ export class FlrFileUtil {
         fontsRelativeResourceDirs = Object.values<string>(fonts);
       }
     } catch (e) {
-      vscode.window.showErrorMessage(e);
+      let flutterMainProjectRootDir = this.getFlutterMainProjectRootDir();
+      var pubspecFile = "pubspec.yaml";
+      if (flutterProjectRootDir !== flutterMainProjectRootDir) {
+        let subProjectRootDirname = path.basename(flutterProjectRootDir);
+        pubspecFile = `${subProjectRootDirname}/${pubspecFile}`;
+      }
+      if (e instanceof yaml.YAMLException) {
+        let msg = `${pubspecFile} is damaged with syntax error: \n ${e.message}`;
+        vscode.window.showErrorMessage(msg);
+      } else {
+        let msg = `${pubspecFile} is damaged with some error: \n ${e}`;
+        vscode.window.showErrorMessage(msg);
+      }
     }
 
     let resourceDirResultTuple = [
