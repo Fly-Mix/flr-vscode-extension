@@ -1,3 +1,11 @@
+## [2.1.0]
+
+- Support for processing (init/generate/monitor) multi projects (the main project and its sub projects in one workspace)
+
+- Support for auto merging old asset specifications when specifying new assets
+
+   > This is can help you to auto keep the manually added asset specifications.
+
 ## [2.0.1]
 
 - fixed resources path problem when using in windows [#2](https://github.com/Fly-Mix/flr-vscode-extension/issues/2)

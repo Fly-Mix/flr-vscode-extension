@@ -13,36 +13,20 @@ export function activate(context: vscode.ExtensionContext) {
 
   let filename = utils.Names.pubspec;
 
-  function checkFlrFile(): Promise<boolean> {
+  function checkIsFlutterProject(): Promise<boolean> {
     return new Promise<boolean>((success, failure) => {
-      let flutterProjectRootDir = FlrFileUtil.getCurFlutterProjectRootDir();
+      let flutterProjectRootDir = FlrFileUtil.getFlutterMainProjectRootDir();
       if (flutterProjectRootDir === undefined) {
         success(false);
         return;
       }
 
       let pubspecFile = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
-      let pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(pubspecFile);
-
-      if (pubspecConfig.hasOwnProperty("flr")) {
-        let flrConfig = pubspecConfig["flr"];
-
-        let assets = flrConfig["assets"] as [string];
-        let fonts = flrConfig["fonts"] as [string];
-        var legalResourceDirCount = 0;
-
-        // TODO: 从assets和fonts的配置中筛选合法的资源目录
-        if (assets !== undefined && assets.length > 0) {
-          legalResourceDirCount += assets.length;
-        }
-        if (fonts !== undefined && fonts.length > 0) {
-          legalResourceDirCount += fonts.length;
-        }
-
-        if (legalResourceDirCount > 0) {
-          fp?.toggleMonitor(true, vscode.Uri.file(pubspecFile));
-        }
+      if (fs.existsSync(pubspecFile) === false) {
+        success(false);
+        return;
       }
+      fp?.toggleMonitor(true);
     });
   }
   // make FLR show in Explorer Section
@@ -51,8 +35,8 @@ export function activate(context: vscode.ExtensionContext) {
     fp?.refreshGeneratedResource();
   });
   utils.registerCommandNice(context, utils.Commands.init, async () => {
-    FlrCommand.init();
+    FlrCommand.initAll();
   });
   fp = new FileExplorer(context);
-  checkFlrFile();
+  checkIsFlutterProject();
 }

@@ -4,25 +4,21 @@ import * as fs from "fs";
 import * as mkdirp from "mkdirp";
 import * as rimraf from "rimraf";
 import * as utils from "./utils";
+import { FlrFileUtil } from "./util/FlrFileUtil";
+import * as glob from "glob";
 
 export class FolderManager {
   // MARK: Helper
-  static async getPubspec(): Promise<[string, vscode.FileType][]> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.filter(
-      (folder) => folder.uri.scheme === "file"
-    )[0];
-    if (workspaceFolder) {
-      const children = await this.readDirectory(workspaceFolder.uri);
-      children.sort((a, b) => {
-        if (a[1] === b[1]) {
-          return utils.caseInsensitiveComparator(a[0], b[0]);
-        }
-        return a[1] === vscode.FileType.Directory ? -1 : 1;
+  static async getAllPubspecFiles(): Promise<[string, vscode.FileType][]> {
+    let flutterMainProjectRootDir = FlrFileUtil.getFlutterMainProjectRootDir();
+    if (flutterMainProjectRootDir) {
+      let fileRegx = `${flutterMainProjectRootDir}/**/pubspec.yaml`;
+      let pubspecFiles = glob.sync(fileRegx);
+      var result: [string, vscode.FileType][] = [];
+      pubspecFiles.forEach((file) => {
+        result.push([file, vscode.FileType.File]);
       });
-      let ret = children.filter(([name, _]) => {
-        return name.toLowerCase() === utils.Names.pubspec.toLowerCase();
-      });
-      return Promise.resolve(ret);
+      return Promise.resolve(result);
     } else {
       return Promise.reject();
     }
@@ -217,5 +213,6 @@ export class FileStat implements vscode.FileStat {
 
 export interface Entry {
   uri: vscode.Uri;
+  label: string;
   type: vscode.FileType;
 }

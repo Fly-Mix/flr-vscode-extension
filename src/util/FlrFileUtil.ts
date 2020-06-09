@@ -7,9 +7,9 @@ import * as FlrConstant from "../FlrConstant";
 
 export class FlrFileUtil {
   /*
-   * 获取当前flutter工程的根目录
+   * 获取flutter主工程的根目录
    */
-  public static getCurFlutterProjectRootDir(): string | undefined {
+  public static getFlutterMainProjectRootDir(): string | undefined {
     let folders = vscode.workspace.workspaceFolders;
     if (folders) {
       let root = folders[0].uri.fsPath;
@@ -19,11 +19,127 @@ export class FlrFileUtil {
   }
 
   /*
+   * 获取flutter主工程的所有子工程的根目录
+   */
+  public static getFlutterSubProjectRootDirs(
+    flutterMainProjectRootDir: string
+  ): string[] {
+    var flutterSubProjectRootDirArray: string[] = new Array();
+    let fileRegx = `${flutterMainProjectRootDir}/*/pubspec.yaml`;
+    glob.sync(fileRegx).forEach((file) => {
+      let fileDir = path.dirname(file);
+      flutterSubProjectRootDirArray.push(fileDir);
+    });
+    return flutterSubProjectRootDirArray;
+  }
+
+  /*
    *  获取当前flutter工程的pubspec.yaml文件的路径
    */
   public static getPubspecFilePath(flutterProjectDir: string): string {
     let filePath = flutterProjectDir + "/pubspec.yaml";
     return filePath;
+  }
+
+  /*
+   * 获取当前flutter工程的flr配置资源目录（全路径）
+   *
+   * @return resourceDirResultTuple = [assetsResourceDirs, fontsResourceDirs]
+   */
+  public static getFlrResourceDirs(flutterProjectRootDir: string): string[][] {
+    var assetsResourceDirs: string[] = new Array();
+    var fontsResourceDirs: string[] = new Array();
+
+    try {
+      let pubspecFilePath = this.getPubspecFilePath(flutterProjectRootDir);
+      let fileContents = fs.readFileSync(pubspecFilePath, "utf8");
+      let data = yaml.safeLoad(fileContents);
+      let flr = data["flr"];
+      let assets = flr["assets"];
+      let fonts = flr["fonts"];
+
+      if (assets !== null && assets !== undefined) {
+        let assetsRelativeResourceDirs = Object.values<string>(assets);
+        assetsRelativeResourceDirs.forEach((relativeResourceDir) => {
+          let resourceDir = flutterProjectRootDir + "/" + relativeResourceDir;
+          assetsResourceDirs.push(resourceDir);
+        });
+      }
+
+      if (fonts !== null && fonts !== undefined) {
+        let fontsRelativeResourceDirs = Object.values<string>(fonts);
+        fontsRelativeResourceDirs.forEach((relativeResourceDir) => {
+          let resourceDir = flutterProjectRootDir + "/" + relativeResourceDir;
+          fontsResourceDirs.push(resourceDir);
+        });
+      }
+    } catch (e) {
+      let flutterMainProjectRootDir = this.getFlutterMainProjectRootDir();
+      var pubspecFile = "pubspec.yaml";
+      if (flutterProjectRootDir !== flutterMainProjectRootDir) {
+        let subProjectRootDirname = path.basename(flutterProjectRootDir);
+        pubspecFile = `${subProjectRootDirname}/${pubspecFile}`;
+      }
+      if (e instanceof yaml.YAMLException) {
+        let msg = `${pubspecFile} is damaged with syntax error: \n ${e.message}`;
+        vscode.window.showErrorMessage(msg);
+      } else {
+        let msg = `${pubspecFile} is damaged with some error: \n ${e}`;
+        vscode.window.showErrorMessage(msg);
+      }
+    }
+
+    let resourceDirResultTuple = [assetsResourceDirs, fontsResourceDirs];
+    return resourceDirResultTuple;
+  }
+
+  /*
+   * 获取当前flutter工程的flr配置资源目录（相对路径）
+   *
+   * @return resourceDirResultTuple = [assetsRelativeResourceDirs, fontsRelativeResourceDirs]
+   */
+  public static getFlrRelativeResourceDirs(
+    flutterProjectRootDir: string
+  ): string[][] {
+    var assetsRelativeResourceDirs: string[] = new Array();
+    var fontsRelativeResourceDirs: string[] = new Array();
+
+    try {
+      let pubspecFilePath = this.getPubspecFilePath(flutterProjectRootDir);
+      let fileContents = fs.readFileSync(pubspecFilePath, "utf8");
+      let data = yaml.safeLoad(fileContents);
+      let flr = data["flr"];
+      let assets = flr["assets"];
+      let fonts = flr["fonts"];
+
+      if (assets !== null && assets !== undefined) {
+        assetsRelativeResourceDirs = Object.values<string>(assets);
+      }
+
+      if (fonts !== null && fonts !== undefined) {
+        fontsRelativeResourceDirs = Object.values<string>(fonts);
+      }
+    } catch (e) {
+      let flutterMainProjectRootDir = this.getFlutterMainProjectRootDir();
+      var pubspecFile = "pubspec.yaml";
+      if (flutterProjectRootDir !== flutterMainProjectRootDir) {
+        let subProjectRootDirname = path.basename(flutterProjectRootDir);
+        pubspecFile = `${subProjectRootDirname}/${pubspecFile}`;
+      }
+      if (e instanceof yaml.YAMLException) {
+        let msg = `${pubspecFile} is damaged with syntax error: \n ${e.message}`;
+        vscode.window.showErrorMessage(msg);
+      } else {
+        let msg = `${pubspecFile} is damaged with some error: \n ${e}`;
+        vscode.window.showErrorMessage(msg);
+      }
+    }
+
+    let resourceDirResultTuple = [
+      assetsRelativeResourceDirs,
+      fontsRelativeResourceDirs,
+    ];
+    return resourceDirResultTuple;
   }
 
   public static loadPubspecConfigFromFile(pubspecFile: string): any {

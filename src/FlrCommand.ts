@@ -10,12 +10,34 @@ import { FlrCodeUtil } from "./util/FlrCodeUtil";
 import { exec } from "child_process";
 
 export class FlrCommand {
-  public static async init() {
-    let flutterProjectRootDir = FlrFileUtil.getCurFlutterProjectRootDir();
-    if (flutterProjectRootDir === undefined) {
+  public static async initAll() {
+    // 检测当前flutter主工程根目录是否存在 pubspec.yaml；若不存在说明不是flutter工程
+    let flutterMainProjectRootDir = FlrFileUtil.getFlutterMainProjectRootDir();
+    if (flutterMainProjectRootDir === undefined) {
+      return;
+    }
+    let mainProjectPubspecFile = FlrFileUtil.getPubspecFilePath(
+      flutterMainProjectRootDir
+    );
+    if (fs.existsSync(mainProjectPubspecFile) === false) {
       return;
     }
 
+    // 获取主工程和其所有子工程，对它们进行initOne操作
+    let flutterSubProjectRootDirArray = FlrFileUtil.getFlutterSubProjectRootDirs(
+      flutterMainProjectRootDir
+    );
+    this.initOne(flutterMainProjectRootDir);
+    flutterSubProjectRootDirArray.forEach((flutterProjectRootDir) => {
+      this.initOne(flutterProjectRootDir);
+    });
+
+    vscode.window.showInformationMessage(
+      `adds flr config for all flutter projects done`
+    );
+  }
+
+  public static async initOne(flutterProjectRootDir: string) {
     let pubspecFile = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
 
     if (fs.existsSync(pubspecFile) === false) {
@@ -27,7 +49,6 @@ export class FlrCommand {
     var flrAssets = [];
     var flrFonts = [];
     if (pubspecConfig.hasOwnProperty("flr")) {
-      vscode.window.showInformationMessage(`Already had flr config`);
       let oldFlrConfig = pubspecConfig["flr"];
 
       if (oldFlrConfig.hasOwnProperty("dartfmt_line_length")) {
@@ -81,27 +102,51 @@ export class FlrCommand {
     pubspecConfig["dependencies"] = dependenciesConfig;
 
     FlrFileUtil.dumpPubspecConfigToFile(pubspecConfig, pubspecFile);
+
+    return;
   }
 
-  public static async generate(
-    assetsResourceDirs: string[],
-    fontsResourceDirs: string[]
-  ) {
+  public static async generateAll() {
+    // 检测当前flutter主工程根目录是否存在 pubspec.yaml；若不存在说明不是flutter工程
+    let flutterMainProjectRootDir = FlrFileUtil.getFlutterMainProjectRootDir();
+    if (flutterMainProjectRootDir === undefined) {
+      return;
+    }
+    let mainProjectPubspecFile = FlrFileUtil.getPubspecFilePath(
+      flutterMainProjectRootDir
+    );
+    if (fs.existsSync(mainProjectPubspecFile) === false) {
+      return;
+    }
+
+    // 获取主工程和其所有子工程，对它们进行generateOne操作
+    let flutterSubProjectRootDirArray = FlrFileUtil.getFlutterSubProjectRootDirs(
+      flutterMainProjectRootDir
+    );
+    this.generateOne(flutterMainProjectRootDir);
+    flutterSubProjectRootDirArray.forEach((flutterProjectRootDir) => {
+      this.generateOne(flutterProjectRootDir);
+    });
+
+    vscode.window.showInformationMessage(
+      `generate for all flutter projects done`
+    );
+  }
+
+  public static async generateOne(flutterProjectRootDir: string) {
+    let pubspecFile = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
+    if (fs.existsSync(pubspecFile) === false) {
+      return;
+    }
+
+    let resourceDirResultTuple = FlrFileUtil.getFlrResourceDirs(
+      flutterProjectRootDir
+    );
+    let assetsResourceDirs: string[] = resourceDirResultTuple[0];
+    let fontsResourceDirs: string[] = resourceDirResultTuple[1];
     let validResourceDirCount =
       assetsResourceDirs.length + fontsResourceDirs.length;
     if (validResourceDirCount === 0) {
-      return;
-    }
-
-    let flutterProjectRootDir = FlrFileUtil.getCurFlutterProjectRootDir();
-
-    if (flutterProjectRootDir === undefined) {
-      return;
-    }
-
-    let pubspecFile = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
-
-    if (fs.existsSync(pubspecFile) === false) {
       return;
     }
 
@@ -261,8 +306,23 @@ export class FlrCommand {
 
     let flutterConfig = pubspecConfig["flutter"];
 
-    var assetArray: string[] = new Array();
-    assetArray = assetArray.concat(imageAssetArray, textAssetArray);
+    var newAssetArray: string[] = new Array();
+    newAssetArray = newAssetArray.concat(imageAssetArray, textAssetArray);
+
+    var oldAssetArray: string[] = new Array();
+    if (flutterConfig.hasOwnProperty("assets")) {
+      let assets = flutterConfig["assets"];
+      if (Array.isArray(assets)) {
+        oldAssetArray = assets;
+      }
+    }
+
+    let assetArray: string[] = FlrAssetUtil.mergeFlutterAssets(
+      flutterProjectRootDir,
+      packageName,
+      newAssetArray,
+      oldAssetArray
+    );
     if (assetArray.length > 0) {
       flutterConfig["assets"] = assetArray;
     } else {
