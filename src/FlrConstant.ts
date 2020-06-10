@@ -1,5 +1,5 @@
 // 工具版本号
-export let VERSION = "2.1.0";
+export let VERSION = "2.1.1";
 
 // 核心逻辑版本号
 export let CORE_VERSION = "3.1.0";
