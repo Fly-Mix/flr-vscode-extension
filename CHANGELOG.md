@@ -1,3 +1,7 @@
+## [2.1.1]
+
+- Do some optimizations
+
 ## [2.1.0]
 
 - Support for processing (init/generate/monitor) multi projects (the main project and its sub projects in one workspace)
