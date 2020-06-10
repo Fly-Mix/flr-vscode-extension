@@ -55,23 +55,25 @@ export class FlrFileUtil {
       let fileContents = fs.readFileSync(pubspecFilePath, "utf8");
       let data = yaml.safeLoad(fileContents);
       let flr = data["flr"];
-      let assets = flr["assets"];
-      let fonts = flr["fonts"];
+      if (flr !== null && flr !== undefined) {
+        let assets = flr["assets"];
+        let fonts = flr["fonts"];
 
-      if (assets !== null && assets !== undefined) {
-        let assetsRelativeResourceDirs = Object.values<string>(assets);
-        assetsRelativeResourceDirs.forEach((relativeResourceDir) => {
-          let resourceDir = flutterProjectRootDir + "/" + relativeResourceDir;
-          assetsResourceDirs.push(resourceDir);
-        });
-      }
+        if (assets !== null && assets !== undefined) {
+          let assetsRelativeResourceDirs = Object.values<string>(assets);
+          assetsRelativeResourceDirs.forEach((relativeResourceDir) => {
+            let resourceDir = flutterProjectRootDir + "/" + relativeResourceDir;
+            assetsResourceDirs.push(resourceDir);
+          });
+        }
 
-      if (fonts !== null && fonts !== undefined) {
-        let fontsRelativeResourceDirs = Object.values<string>(fonts);
-        fontsRelativeResourceDirs.forEach((relativeResourceDir) => {
-          let resourceDir = flutterProjectRootDir + "/" + relativeResourceDir;
-          fontsResourceDirs.push(resourceDir);
-        });
+        if (fonts !== null && fonts !== undefined) {
+          let fontsRelativeResourceDirs = Object.values<string>(fonts);
+          fontsRelativeResourceDirs.forEach((relativeResourceDir) => {
+            let resourceDir = flutterProjectRootDir + "/" + relativeResourceDir;
+            fontsResourceDirs.push(resourceDir);
+          });
+        }
       }
     } catch (e) {
       let flutterMainProjectRootDir = this.getFlutterMainProjectRootDir();
@@ -85,7 +87,7 @@ export class FlrFileUtil {
         vscode.window.showErrorMessage(msg);
       } else {
         let msg = `${pubspecFile} is damaged with some error: \n ${e}`;
-        vscode.window.showErrorMessage(msg);
+        console.log(msg);
       }
     }
 
@@ -109,15 +111,17 @@ export class FlrFileUtil {
       let fileContents = fs.readFileSync(pubspecFilePath, "utf8");
       let data = yaml.safeLoad(fileContents);
       let flr = data["flr"];
-      let assets = flr["assets"];
-      let fonts = flr["fonts"];
+      if (flr !== null && flr !== undefined) {
+        let assets = flr["assets"];
+        let fonts = flr["fonts"];
 
-      if (assets !== null && assets !== undefined) {
-        assetsRelativeResourceDirs = Object.values<string>(assets);
-      }
+        if (assets !== null && assets !== undefined) {
+          assetsRelativeResourceDirs = Object.values<string>(assets);
+        }
 
-      if (fonts !== null && fonts !== undefined) {
-        fontsRelativeResourceDirs = Object.values<string>(fonts);
+        if (fonts !== null && fonts !== undefined) {
+          fontsRelativeResourceDirs = Object.values<string>(fonts);
+        }
       }
     } catch (e) {
       let flutterMainProjectRootDir = this.getFlutterMainProjectRootDir();
@@ -131,7 +135,7 @@ export class FlrFileUtil {
         vscode.window.showErrorMessage(msg);
       } else {
         let msg = `${pubspecFile} is damaged with some error: \n ${e}`;
-        vscode.window.showErrorMessage(msg);
+        console.log(msg);
       }
     }
 
