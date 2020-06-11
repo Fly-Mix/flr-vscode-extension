@@ -32,7 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
   // make FLR show in Explorer Section
   utils.switchControl(utils.ControlFlags.isPubspecYamlExist, true);
   utils.registerCommandNice(context, utils.Commands.refresh, () => {
-    fp?.refreshGeneratedResource();
+    fp?.refreshGeneratedResource(false);
   });
   utils.registerCommandNice(context, utils.Commands.init, async () => {
     FlrCommand.initAll();

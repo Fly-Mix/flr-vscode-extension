@@ -119,17 +119,17 @@ export class FileExplorer {
     );
   }
 
-  refreshGeneratedResource() {
+  refreshGeneratedResource(silent: boolean = true) {
     let raw = utils.firstWorkSpace();
     if (raw === undefined) {
       return;
     }
     this.refreshMonitorPath();
-    this.invokeFlrGenerateCmd();
+    this.invokeFlrGenerateCmd(silent);
   }
 
-  private invokeFlrGenerateCmd() {
-    FlrCommand.generateAll();
+  private invokeFlrGenerateCmd(silent: boolean = true) {
+    FlrCommand.generateAll(silent);
   }
 
   private openResource(resource: vscode.Uri) {
@@ -194,7 +194,6 @@ export class FileExplorer {
     utils.switchControl(utils.ControlFlags.isMonitorEnabled, toValue);
 
     if (toValue) {
-      this.refreshMonitorPath();
       this.refreshGeneratedResource();
     } else {
       // disabled
