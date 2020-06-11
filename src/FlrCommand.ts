@@ -307,7 +307,10 @@ export class FlrCommand {
       vscode.window.showInformationMessage(tips);
     }
 
-    let flutterConfig = pubspecConfig["flutter"];
+    var flutterConfig = pubspecConfig["flutter"];
+    if (flutterConfig instanceof Map === false) {
+      flutterConfig = {};
+    }
 
     var newAssetArray: string[] = new Array();
     newAssetArray = newAssetArray.concat(imageAssetArray, textAssetArray);
