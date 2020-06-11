@@ -76,15 +76,16 @@ export class FlrCommand {
     let str = await this.execute("flutter --version");
     let lines = str.split("\n");
     if (lines.length > 0) {
-      let flutterVer = lines[0]
-        .split("•")[0]
-        ?.split(" ")[1]
-        ?.split("+")[0]
-        ?.replace(/\./g, "");
+      let flutterVer = lines[0].split("•")[0]?.split(" ")[1]?.split("+")[0];
+      let valus = flutterVer.split(".");
       if (flutterVer !== null) {
+        let totalVer =
+          (parseInt(valus[0]) ?? 0) * 1000 +
+          (parseInt(valus[1]) ?? 0) * 100 +
+          (parseInt(valus[2]) ?? 0) * 10;
         // version using decoder callback
-        let fixedVer = 11015; // v1.10.15
-        if (parseInt(flutterVer) >= fixedVer) {
+        let fixedVer = 2150; // v1.10.15 // 1000 + 1000 + 150 = 2150
+        if (totalVer >= fixedVer) {
           ref = "0.2.1";
         }
       }
