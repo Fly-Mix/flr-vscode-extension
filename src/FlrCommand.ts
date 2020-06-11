@@ -80,11 +80,11 @@ export class FlrCommand {
       let valus = flutterVer.split(".");
       if (flutterVer !== null) {
         let totalVer =
-          (parseInt(valus[0]) ?? 0) * 1000 +
-          (parseInt(valus[1]) ?? 0) * 100 +
-          (parseInt(valus[2]) ?? 0) * 10;
+          (parseInt(valus[0]) ?? 0) * 10000000 +
+          (parseInt(valus[1]) ?? 0) * 1000 +
+          (parseInt(valus[2]) ?? 0);
         // version using decoder callback
-        let fixedVer = 2150; // v1.10.15 // 1000 + 1000 + 150 = 2150
+        let fixedVer = 10010015; // v1.10.15 // 10000000 + 10000 + 15 = 10010015
         if (totalVer >= fixedVer) {
           ref = "0.2.1";
         }
