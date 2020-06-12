@@ -7,6 +7,7 @@ import * as flrPathMan from "./folder-manager";
 import * as md5 from "md5";
 import { FlrFileUtil } from "./util/FlrFileUtil";
 import { FlrCommand } from "./FlrCommand";
+import { log } from "console";
 
 export class FileExplorer {
   private fileExplorer: vscode.TreeView<flrPathMan.Entry>;
@@ -186,6 +187,31 @@ export class FileExplorer {
         let relativeDirInMainProject =
           subProjectRootDirName + "/" + relativeDirInSubProject;
         this.fontsRelativeResourceDirs.push(relativeDirInMainProject);
+      });
+    });
+  }
+
+  readMD5OfPubspecInFolder() {
+    let raw = utils.firstWorkSpace();
+    if (raw === undefined) {
+      return;
+    }
+    let uri = raw!;
+    fs.readdir(uri.fsPath, (err, files) => {
+      files.forEach((file) => {
+        let fileBasename = path.basename(file);
+        if (fileBasename === utils.Names.pubspec) {
+          try {
+            let pubspecFileUri = vscode.Uri.file(path.join(uri.fsPath, file));
+            let fileContents = fs.readFileSync(pubspecFileUri.fsPath, "utf8");
+            let currentMD5 = md5(fileContents);
+            let curPubspecFileMd5 = this.pubspecFileMd5Map.get(file);
+            if (currentMD5 === curPubspecFileMd5) {
+              return;
+            }
+            this.pubspecFileMd5Map.set(file, currentMD5);
+          } catch (_) {}
+        }
       });
     });
   }

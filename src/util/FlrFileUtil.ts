@@ -321,7 +321,7 @@ export class FlrFileUtil {
     let files = glob.sync(regx);
 
     files.forEach((file) => {
-      if (fs.statSync(file).isDirectory) {
+      if (fs.statSync(file).isDirectory()) {
         resourceDirFileArray.push(file);
       }
     });

@@ -26,6 +26,7 @@ export function activate(context: vscode.ExtensionContext) {
         success(false);
         return;
       }
+      fp?.readMD5OfPubspecInFolder();
       fp?.toggleMonitor(true);
     });
   }
