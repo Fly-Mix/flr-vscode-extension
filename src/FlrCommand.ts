@@ -107,7 +107,7 @@ export class FlrCommand {
     return;
   }
 
-  public static async generateAll() {
+  public static async generateAll(silent: boolean = true) {
     // 检测当前flutter主工程根目录是否存在 pubspec.yaml；若不存在说明不是flutter工程
     let flutterMainProjectRootDir = FlrFileUtil.getFlutterMainProjectRootDir();
     if (flutterMainProjectRootDir === undefined) {
@@ -129,9 +129,11 @@ export class FlrCommand {
       this.generateOne(flutterProjectRootDir);
     });
 
-    vscode.window.showInformationMessage(
-      `generate for all flutter projects done`
-    );
+    if (silent === false) {
+      vscode.window.showInformationMessage(
+        `generate for all flutter projects done`
+      );
+    }
   }
 
   public static async generateOne(flutterProjectRootDir: string) {
@@ -305,7 +307,10 @@ export class FlrCommand {
       vscode.window.showInformationMessage(tips);
     }
 
-    let flutterConfig = pubspecConfig["flutter"];
+    var flutterConfig = pubspecConfig["flutter"];
+    if (flutterConfig instanceof Map === false) {
+      flutterConfig = {};
+    }
 
     var newAssetArray: string[] = new Array();
     newAssetArray = newAssetArray.concat(imageAssetArray, textAssetArray);

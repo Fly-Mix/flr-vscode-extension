@@ -1,3 +1,8 @@
+## [2.1.2]
+
+- Improve robustness
+- Fix [r_dart_library](https://github.com/YK-Unit/r_dart_library) version logic 
+
 ## [2.1.1]
 
 - Do some optimizations
