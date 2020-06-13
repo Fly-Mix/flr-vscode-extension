@@ -308,7 +308,12 @@ export class FlrCommand {
     }
 
     var flutterConfig = pubspecConfig["flutter"];
-    if (flutterConfig instanceof Map === false) {
+    if (
+      flutterConfig === undefined ||
+      flutterConfig === null ||
+      flutterConfig instanceof Object === false ||
+      Object.keys(flutterConfig).length === 0
+    ) {
       flutterConfig = {};
     }
 
