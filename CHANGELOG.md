@@ -1,3 +1,8 @@
+## [2.1.3]
+
+- Fix [issue#4](https://github.com/Fly-Mix/flr-vscode-extension/issues/4)
+- Improve pubspec.yaml file watcher logic
+
 ## [2.1.2]
 
 - Improve robustness
