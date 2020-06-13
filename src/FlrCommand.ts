@@ -308,7 +308,12 @@ export class FlrCommand {
     }
 
     var flutterConfig = pubspecConfig["flutter"];
-    if (flutterConfig instanceof Map === false) {
+    if (
+      flutterConfig === undefined ||
+      flutterConfig === null ||
+      flutterConfig instanceof Object === false ||
+      Object.keys(flutterConfig).length === 0
+    ) {
       flutterConfig = {};
     }
 
@@ -342,6 +347,14 @@ export class FlrCommand {
     }
 
     pubspecConfig["flutter"] = flutterConfig;
+
+    // update flr core_version
+    var flrConfig = pubspecConfig["flr"];
+    if (flrConfig instanceof Object) {
+      flrConfig["core_version"] = FlrConstant.CORE_VERSION;
+      pubspecConfig["flr"] = flrConfig;
+    }
+
     FlrFileUtil.dumpPubspecConfigToFile(pubspecConfig, pubspecFile);
 
     var nonSvgImageAssetIdDict: Map<string, string> = new Map();

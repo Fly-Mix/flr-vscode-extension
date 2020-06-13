@@ -171,6 +171,13 @@ export class FlrFileUtil {
     }
   }
 
+  public static formatPubspecFile(pubspecFile: string) {
+    try {
+      let pubspecConfig = this.loadPubspecConfigFromFile(pubspecFile);
+      this.dumpPubspecConfigToFile(pubspecConfig, pubspecFile);
+    } catch (_) {}
+  }
+
   /*
    * 判断当前flutter工程的工程类型是不是Package工程类型
    *
