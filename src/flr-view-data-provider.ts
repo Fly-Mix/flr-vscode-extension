@@ -13,6 +13,9 @@ export class FileExplorer {
   private fileExplorer: vscode.TreeView<flrPathMan.Entry>;
   private assetsRelativeResourceDirs: string[];
   private fontsRelativeResourceDirs: string[];
+  // flutterConfig+flrConfig组合的MD5字典
+  private flutterAndFlrConfigsMd5Map: Map<string, string> = new Map();
+  // pubspecFile的MD5字典
   private pubspecFileMd5Map: Map<string, string> = new Map();
 
   constructor(context: vscode.ExtensionContext) {
@@ -83,14 +86,37 @@ export class FileExplorer {
           // if change, conditional restart watcher
           try {
             let pubspecFileUri = vscode.Uri.file(path.join(uri.fsPath, file));
-            let fileContents = fs.readFileSync(pubspecFileUri.fsPath, "utf8");
-            let currentMD5 = md5(fileContents);
+            let pubspecFile = pubspecFileUri.path;
             let key = pubspecFileUri.fsPath;
-            let curPubspecFileMd5 = this.pubspecFileMd5Map.get(key);
-            if (currentMD5 === curPubspecFileMd5) {
+
+            let curFlutterAndFlrConfigsMd5 = this.generateFlutterAndFlrConfigsMd5(
+              pubspecFile
+            );
+            let lastFlutterAndFlrConfigsMd5 = this.flutterAndFlrConfigsMd5Map.get(
+              key
+            );
+
+            // flutterConfig 和 flrConfig 有变化时，才执行generate操作，否则只执行格式化pubspec.yaml的操作
+            if (curFlutterAndFlrConfigsMd5 === lastFlutterAndFlrConfigsMd5) {
+              // 比较 pubsepcFile有没变化，有的话，就进行格式化
+              let curPubspecFileMd5 = this.generatePubspecFileMd5(pubspecFile);
+              let lastPubspecFileMd5 = this.pubspecFileMd5Map.get(key);
+              if (
+                curPubspecFileMd5 !== lastPubspecFileMd5 &&
+                curPubspecFileMd5 !== undefined
+              ) {
+                this.pubspecFileMd5Map.set(key, curPubspecFileMd5);
+                FlrFileUtil.formatPubspecFile(pubspecFileUri.path);
+              }
               return;
             }
-            this.pubspecFileMd5Map.set(key, currentMD5);
+
+            if (curFlutterAndFlrConfigsMd5) {
+              this.flutterAndFlrConfigsMd5Map.set(
+                key,
+                curFlutterAndFlrConfigsMd5
+              );
+            }
           } catch (_) {}
           if (event === "change") {
             // compare md5 before and after, stop looping
@@ -192,19 +218,81 @@ export class FileExplorer {
     });
   }
 
+  private generatePubspecFileMd5(filePath: string): string | undefined {
+    let fileBasename = path.basename(filePath);
+    if (fileBasename !== utils.Names.pubspec) {
+      return undefined;
+    }
+
+    try {
+      let fileContents = fs.readFileSync(filePath, "utf8");
+      let fileMD5 = md5(fileContents);
+      return fileMD5;
+    } catch (_) {}
+
+    return undefined;
+  }
+
+  private generateFlutterAndFlrConfigsMd5(
+    filePath: string
+  ): string | undefined {
+    let fileBasename = path.basename(filePath);
+    if (fileBasename !== utils.Names.pubspec) {
+      return undefined;
+    }
+
+    try {
+      let pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(filePath);
+      var flutterConfigJson = "{}";
+      var flrConfigJson = "{}";
+
+      if (pubspecConfig.hasOwnProperty("flutter")) {
+        let flutterConfig = pubspecConfig["flutter"];
+        flutterConfigJson = JSON.stringify(flutterConfig);
+      }
+
+      if (pubspecConfig.hasOwnProperty("flr")) {
+        let flrConfig = pubspecConfig["flr"];
+        flrConfigJson = JSON.stringify(flrConfig);
+      }
+
+      let fileContents = `${flutterConfigJson}\n${flrConfigJson}`;
+      let fileMD5 = md5(fileContents);
+      return fileMD5;
+    } catch (_) {}
+
+    return undefined;
+  }
+
   private updateMD5For(file: string) {
     let fileBasename = path.basename(file);
     if (fileBasename === utils.Names.pubspec) {
       try {
         let pubspecFileUri = vscode.Uri.file(file);
-        let fileContents = fs.readFileSync(pubspecFileUri.fsPath, "utf8");
+        let pubspecFile = pubspecFileUri.path;
         let key = pubspecFileUri.fsPath;
-        let currentMD5 = md5(fileContents);
-        let curPubspecFileMd5 = this.pubspecFileMd5Map.get(key);
-        if (currentMD5 === curPubspecFileMd5) {
-          return;
+
+        let curPubspecFileMd5 = this.generatePubspecFileMd5(pubspecFile);
+        let lastPubspecFileMd5 = this.pubspecFileMd5Map.get(key);
+        if (
+          curPubspecFileMd5 !== lastPubspecFileMd5 &&
+          curPubspecFileMd5 !== undefined
+        ) {
+          this.pubspecFileMd5Map.set(key, curPubspecFileMd5);
         }
-        this.pubspecFileMd5Map.set(key, currentMD5);
+
+        let curFlutterAndFlrConfigsMd5 = this.generateFlutterAndFlrConfigsMd5(
+          pubspecFile
+        );
+        let lastFlutterAndFlrConfigsMd5 = this.flutterAndFlrConfigsMd5Map.get(
+          key
+        );
+        if (
+          curFlutterAndFlrConfigsMd5 !== lastFlutterAndFlrConfigsMd5 &&
+          curFlutterAndFlrConfigsMd5 !== undefined
+        ) {
+          this.flutterAndFlrConfigsMd5Map.set(key, curFlutterAndFlrConfigsMd5);
+        }
       } catch (_) {}
     }
   }
