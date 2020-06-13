@@ -347,6 +347,14 @@ export class FlrCommand {
     }
 
     pubspecConfig["flutter"] = flutterConfig;
+
+    // update flr core_version
+    var flrConfig = pubspecConfig["flr"];
+    if (flrConfig instanceof Object) {
+      flrConfig["core_version"] = FlrConstant.CORE_VERSION;
+      pubspecConfig["flr"] = flrConfig;
+    }
+
     FlrFileUtil.dumpPubspecConfigToFile(pubspecConfig, pubspecFile);
 
     var nonSvgImageAssetIdDict: Map<string, string> = new Map();
