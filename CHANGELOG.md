@@ -1,3 +1,9 @@
+## [3.0.0]
+
+- support null safety 
+- new logic for check project dart version when init
+- Fix [issue#9](https://github.com/Fly-Mix/flr-vscode-extension/issues/9)
+- Fix [issue#8](https://github.com/Fly-Mix/flr-vscode-extension/issues/8)
 ## [2.1.3]
 
 - Fix [issue#4](https://github.com/Fly-Mix/flr-vscode-extension/issues/4)

@@ -1,13 +1,13 @@
-import * as vscode from "vscode";
-import * as path from "path";
-import * as os from "os";
-import * as fs from "fs";
-import * as FlrConstant from "./FlrConstant";
-import { FlrFileUtil } from "./util/FlrFileUtil";
-import * as utils from "./utils";
-import { FlrAssetUtil } from "./util/FlrAssetUtil";
-import { FlrCodeUtil } from "./util/FlrCodeUtil";
-import { exec } from "child_process";
+import * as vscode from 'vscode';
+import * as path from 'path';
+import * as os from 'os';
+import * as fs from 'fs';
+import * as FlrConstant from './FlrConstant';
+import { FlrFileUtil } from './util/FlrFileUtil';
+import * as utils from './utils';
+import { FlrAssetUtil } from './util/FlrAssetUtil';
+import { FlrCodeUtil } from './util/FlrCodeUtil';
+import { exec } from 'child_process';
 
 export class FlrCommand {
   public static async initAll() {
@@ -24,9 +24,8 @@ export class FlrCommand {
     }
 
     // 获取主工程和其所有子工程，对它们进行initOne操作
-    let flutterSubProjectRootDirArray = FlrFileUtil.getFlutterSubProjectRootDirs(
-      flutterMainProjectRootDir
-    );
+    let flutterSubProjectRootDirArray =
+      FlrFileUtil.getFlutterSubProjectRootDirs(flutterMainProjectRootDir);
     this.initOne(flutterMainProjectRootDir);
     flutterSubProjectRootDirArray.forEach((flutterProjectRootDir) => {
       this.initOne(flutterProjectRootDir);
@@ -48,19 +47,19 @@ export class FlrCommand {
     var flrDartfmtLineLength = FlrConstant.DARTFMT_LINE_LENGTH;
     var flrAssets = [];
     var flrFonts = [];
-    if (pubspecConfig.hasOwnProperty("flr")) {
-      let oldFlrConfig = pubspecConfig["flr"];
+    if (pubspecConfig.hasOwnProperty('flr')) {
+      let oldFlrConfig = pubspecConfig['flr'];
 
-      if (oldFlrConfig.hasOwnProperty("dartfmt_line_length")) {
-        flrDartfmtLineLength = oldFlrConfig["dartfmt_line_length"];
+      if (oldFlrConfig.hasOwnProperty('dartfmt_line_length')) {
+        flrDartfmtLineLength = oldFlrConfig['dartfmt_line_length'];
       }
 
-      if (oldFlrConfig.hasOwnProperty("assets")) {
-        flrAssets = oldFlrConfig["assets"];
+      if (oldFlrConfig.hasOwnProperty('assets')) {
+        flrAssets = oldFlrConfig['assets'];
       }
 
-      if (oldFlrConfig.hasOwnProperty("fonts")) {
-        flrFonts = oldFlrConfig["fonts"];
+      if (oldFlrConfig.hasOwnProperty('fonts')) {
+        flrFonts = oldFlrConfig['fonts'];
       }
     }
 
@@ -70,37 +69,48 @@ export class FlrCommand {
       assets: flrAssets,
       fonts: flrFonts,
     };
-    pubspecConfig["flr"] = flrConfig;
+    pubspecConfig['flr'] = flrConfig;
 
-    var ref = "0.1.1";
-    let str = await this.execute("flutter --version");
-    let lines = str.split("\n");
-    if (lines.length > 0) {
-      let flutterVer = lines[0].split("•")[0]?.split(" ")[1]?.split("+")[0];
-      let valus = flutterVer.split(".");
-      if (flutterVer !== null) {
-        let totalVer =
+    var ref = '0.1.1';
+    var versionString = '';
+    let sdk = pubspecConfig['environment'].sdk as String;
+    console.log(sdk);
+    if (sdk !== undefined) {
+      let constraints = sdk.split(' ');
+      console.log(constraints);
+      if (constraints.length > 0) {
+        let atLeastVersion = constraints[0]
+          .replace('>=', '')
+          .replace('>', '')
+          .replace('=', '');
+        console.log(atLeastVersion);
+        let valus = atLeastVersion.split('.');
+        let dartVersion =
           (parseInt(valus[0]) ?? 0) * 10000000 +
           (parseInt(valus[1]) ?? 0) * 1000 +
           (parseInt(valus[2]) ?? 0);
-        // version using decoder callback
-        let fixedVer = 10010015; // v1.10.15 // 10000000 + 10000 + 15 = 10010015
-        if (totalVer >= fixedVer) {
-          ref = "0.2.1";
+        console.log(dartVersion);
+        //20012000
+        let dartVersionV1 = 20000000 + 6000; // flutter verion v1.10.15 - dart 2.6.0
+        let dartVersionV2 = 20000000 + 12000; // dart 2.12.0
+        if (dartVersion >= dartVersionV2) {
+          ref = '0.4.0-nullsafety.0';
+        } else if (dartVersion >= dartVersionV1) {
+          ref = '0.2.1';
         }
       }
     }
 
     let rDartLibraryConfig = {
       git: {
-        url: "https://github.com/YK-Unit/r_dart_library.git",
+        url: 'https://github.com/YK-Unit/r_dart_library.git',
         ref: ref,
       },
     };
 
-    var dependenciesConfig = pubspecConfig["dependencies"];
-    dependenciesConfig["r_dart_library"] = rDartLibraryConfig;
-    pubspecConfig["dependencies"] = dependenciesConfig;
+    var dependenciesConfig = pubspecConfig['dependencies'];
+    dependenciesConfig['r_dart_library'] = rDartLibraryConfig;
+    pubspecConfig['dependencies'] = dependenciesConfig;
 
     FlrFileUtil.dumpPubspecConfigToFile(pubspecConfig, pubspecFile);
 
@@ -121,9 +131,8 @@ export class FlrCommand {
     }
 
     // 获取主工程和其所有子工程，对它们进行generateOne操作
-    let flutterSubProjectRootDirArray = FlrFileUtil.getFlutterSubProjectRootDirs(
-      flutterMainProjectRootDir
-    );
+    let flutterSubProjectRootDirArray =
+      FlrFileUtil.getFlutterSubProjectRootDirs(flutterMainProjectRootDir);
     this.generateOne(flutterMainProjectRootDir);
     flutterSubProjectRootDirArray.forEach((flutterProjectRootDir) => {
       this.generateOne(flutterProjectRootDir);
@@ -154,7 +163,7 @@ export class FlrCommand {
     }
 
     let pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(pubspecFile);
-    let packageName = pubspecConfig["name"];
+    let packageName = pubspecConfig['name'];
 
     let isPackageProjectType = FlrFileUtil.isPackageProjectType(
       flutterProjectRootDir
@@ -220,17 +229,15 @@ export class FlrCommand {
     var illegalFontFileArray: string[] = new Array();
     for (const index in fontsResourceDirs) {
       let resourceDir = fontsResourceDirs[index];
-      let fontFamilyDirArray: string[] = FlrFileUtil.findTopChildDirs(
-        resourceDir
-      );
+      let fontFamilyDirArray: string[] =
+        FlrFileUtil.findTopChildDirs(resourceDir);
 
       for (const j in fontFamilyDirArray) {
         let fontFamilyDir = fontFamilyDirArray[j];
         let fontFamilyName = path.basename(fontFamilyDir);
 
-        let fontFileResultTuple = FlrFileUtil.findFontFilesInFontFamilyDir(
-          fontFamilyDir
-        );
+        let fontFileResultTuple =
+          FlrFileUtil.findFontFilesInFontFamilyDir(fontFamilyDir);
         let legalFontFileArray = fontFileResultTuple[0];
         let illegalFontFileSubArray = fontFileResultTuple[1];
 
@@ -248,15 +255,15 @@ export class FlrCommand {
           legalFontFileArray
         );
         fontAssetConfigArray.sort((a: any, b: any) => {
-          let aAsset = a["asset"];
-          let bAsset = b["asset"];
+          let aAsset = a['asset'];
+          let bAsset = b['asset'];
 
           if (aAsset === undefined) {
-            aAsset = "";
+            aAsset = '';
           }
 
           if (bAsset === undefined) {
-            bAsset = "";
+            bAsset = '';
           }
 
           return utils.caseInsensitiveComparator(aAsset, bAsset);
@@ -271,15 +278,15 @@ export class FlrCommand {
       }
 
       fontFamilyConfigArray.sort((a: any, b: any) => {
-        let aFamily = a["family"];
-        let bFamily = b["family"];
+        let aFamily = a['family'];
+        let bFamily = b['family'];
 
         if (aFamily === undefined) {
-          aFamily = "";
+          aFamily = '';
         }
 
         if (bFamily === undefined) {
-          bFamily = "";
+          bFamily = '';
         }
 
         return utils.caseInsensitiveComparator(aFamily, bFamily);
@@ -295,19 +302,19 @@ export class FlrCommand {
 
     if (illegalResourceFileArray.length > 0) {
       var tips =
-        "[!]: warning, found the following resource(s) that the file basename contains illegal characters: ";
+        '[!]: warning, found the following resource(s) that the file basename contains illegal characters: ';
       for (const index in illegalResourceFileArray) {
         let resourceFile = illegalResourceFileArray[index];
-        tips += "\n";
-        tips += "  - " + resourceFile;
+        tips += '\n';
+        tips += '  - ' + resourceFile;
       }
-      tips += "\n";
+      tips += '\n';
       tips +=
         "[*]: to fix it, you should only use letters (a-z, A-Z), numbers (0-9), and the other legal characters ('_', '+', '-', '.', '·', '!', '@', '&', '$', '￥') to name the file";
       vscode.window.showInformationMessage(tips);
     }
 
-    var flutterConfig = pubspecConfig["flutter"];
+    var flutterConfig = pubspecConfig['flutter'];
     if (
       flutterConfig === undefined ||
       flutterConfig === null ||
@@ -321,8 +328,8 @@ export class FlrCommand {
     newAssetArray = newAssetArray.concat(imageAssetArray, textAssetArray);
 
     var oldAssetArray: string[] = new Array();
-    if (flutterConfig.hasOwnProperty("assets")) {
-      let assets = flutterConfig["assets"];
+    if (flutterConfig.hasOwnProperty('assets')) {
+      let assets = flutterConfig['assets'];
       if (Array.isArray(assets)) {
         oldAssetArray = assets;
       }
@@ -335,24 +342,24 @@ export class FlrCommand {
       oldAssetArray
     );
     if (assetArray.length > 0) {
-      flutterConfig["assets"] = assetArray;
+      flutterConfig['assets'] = assetArray;
     } else {
-      delete flutterConfig["assets"];
+      delete flutterConfig['assets'];
     }
 
     if (fontFamilyConfigArray.length > 0) {
-      flutterConfig["fonts"] = fontFamilyConfigArray;
+      flutterConfig['fonts'] = fontFamilyConfigArray;
     } else {
-      delete flutterConfig["fonts"];
+      delete flutterConfig['fonts'];
     }
 
-    pubspecConfig["flutter"] = flutterConfig;
+    pubspecConfig['flutter'] = flutterConfig;
 
     // update flr core_version
-    var flrConfig = pubspecConfig["flr"];
+    var flrConfig = pubspecConfig['flr'];
     if (flrConfig instanceof Object) {
-      flrConfig["core_version"] = FlrConstant.CORE_VERSION;
-      pubspecConfig["flr"] = flrConfig;
+      flrConfig['core_version'] = FlrConstant.CORE_VERSION;
+      pubspecConfig['flr'] = flrConfig;
     }
 
     FlrFileUtil.dumpPubspecConfigToFile(pubspecConfig, pubspecFile);
@@ -391,45 +398,47 @@ export class FlrCommand {
       textAssetIdDict.set(asset, assetId);
     }
 
-    var r_dart_file_content = "";
+    var r_dart_file_content = '';
 
     let g_R_class_code = FlrCodeUtil.generate_R_class(packageName);
     r_dart_file_content += g_R_class_code;
 
-    r_dart_file_content += "\n";
-    let g_AssetResource_class_code = FlrCodeUtil.generate_AssetResource_class(
-      packageName
-    );
+    r_dart_file_content += '\n';
+    let g_AssetResource_class_code =
+      FlrCodeUtil.generate_AssetResource_class(packageName);
     r_dart_file_content += g_AssetResource_class_code;
 
-    r_dart_file_content += "\n";
-    let g__R_Image_AssetResource_class_code = FlrCodeUtil.generate__R_Image_AssetResource_class(
-      nonSvgImageAssetArray,
-      nonSvgImageAssetIdDict,
-      packageName,
-      isPackageProjectType
-    );
+    r_dart_file_content += '\n';
+    let g__R_Image_AssetResource_class_code =
+      FlrCodeUtil.generate__R_Image_AssetResource_class(
+        nonSvgImageAssetArray,
+        nonSvgImageAssetIdDict,
+        packageName,
+        isPackageProjectType
+      );
     r_dart_file_content += g__R_Image_AssetResource_class_code;
 
-    r_dart_file_content += "\n";
-    let g__R_Svg_AssetResource_class_code = FlrCodeUtil.generate__R_Svg_AssetResource_class(
-      svgImageAssetArray,
-      svgImageAssetIdDict,
-      packageName,
-      isPackageProjectType
-    );
+    r_dart_file_content += '\n';
+    let g__R_Svg_AssetResource_class_code =
+      FlrCodeUtil.generate__R_Svg_AssetResource_class(
+        svgImageAssetArray,
+        svgImageAssetIdDict,
+        packageName,
+        isPackageProjectType
+      );
     r_dart_file_content += g__R_Svg_AssetResource_class_code;
 
-    r_dart_file_content += "\n";
-    let g__R_Text_AssetResource_class_code = FlrCodeUtil.generate__R_Text_AssetResource_class(
-      textAssetArray,
-      textAssetIdDict,
-      packageName,
-      isPackageProjectType
-    );
+    r_dart_file_content += '\n';
+    let g__R_Text_AssetResource_class_code =
+      FlrCodeUtil.generate__R_Text_AssetResource_class(
+        textAssetArray,
+        textAssetIdDict,
+        packageName,
+        isPackageProjectType
+      );
     r_dart_file_content += g__R_Text_AssetResource_class_code;
 
-    r_dart_file_content += "\n";
+    r_dart_file_content += '\n';
     let g__R_Image_class_code = FlrCodeUtil.generate__R_Image_class(
       nonSvgImageAssetArray,
       nonSvgImageAssetIdDict,
@@ -437,7 +446,7 @@ export class FlrCommand {
     );
     r_dart_file_content += g__R_Image_class_code;
 
-    r_dart_file_content += "\n";
+    r_dart_file_content += '\n';
     let g__R_Svg_class_code = FlrCodeUtil.generate__R_Svg_class(
       svgImageAssetArray,
       svgImageAssetIdDict,
@@ -445,7 +454,7 @@ export class FlrCommand {
     );
     r_dart_file_content += g__R_Svg_class_code;
 
-    r_dart_file_content += "\n";
+    r_dart_file_content += '\n';
     let g__R_Text_class_code = FlrCodeUtil.generate__R_Text_class(
       textAssetArray,
       textAssetIdDict,
@@ -453,27 +462,27 @@ export class FlrCommand {
     );
     r_dart_file_content += g__R_Text_class_code;
 
-    r_dart_file_content += "\n";
+    r_dart_file_content += '\n';
     let g__R_Font_Family_class_code = FlrCodeUtil.generate__R_FontFamily_class(
       fontFamilyConfigArray,
       packageName
     );
     r_dart_file_content += g__R_Font_Family_class_code;
 
-    let rDartFilePath = flutterProjectRootDir + "/lib/r.g.dart";
+    let rDartFilePath = flutterProjectRootDir + '/lib/r.g.dart';
     fs.writeFileSync(rDartFilePath, r_dart_file_content);
 
     /// read line length settings for dart and format
-    var dartfmtLineLength = pubspecConfig["flr"]["dartfmt_line_length"];
+    var dartfmtLineLength = pubspecConfig['flr']['dartfmt_line_length'];
     if (dartfmtLineLength === null || dartfmtLineLength === undefined) {
       let platform = process.platform;
-      var settingFilePath = "";
-      let settingFile = "Code/User/settings.json";
+      var settingFilePath = '';
+      let settingFile = 'Code/User/settings.json';
       /// https://vscode.readthedocs.io/en/latest/getstarted/settings/
-      if (platform === "win32" && process.env.APPDATA !== undefined) {
+      if (platform === 'win32' && process.env.APPDATA !== undefined) {
         // windows
         settingFilePath = path.join(process.env.APPDATA, settingFile);
-      } else if (platform === "darwin") {
+      } else if (platform === 'darwin') {
         // macOS
         settingFilePath = `${os.homedir()}/Library/Application Support/${settingFile}`;
       } else {
@@ -481,9 +490,9 @@ export class FlrCommand {
         settingFilePath = `${os.homedir()}/.config/${settingFile}`;
       }
 
-      let settings = fs.readFileSync(settingFilePath, "utf8");
+      let settings = fs.readFileSync(settingFilePath, 'utf8');
       let json = JSON.parse(settings);
-      let ll = json["dart.lineLength"];
+      let ll = json['dart.lineLength'];
       if (ll !== null && ll !== undefined) {
         dartfmtLineLength = parseInt(ll);
       }

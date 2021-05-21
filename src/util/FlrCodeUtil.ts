@@ -1,6 +1,6 @@
-import * as path from "path";
-import * as fs from "fs";
-import * as FlrConstant from "../FlrConstant";
+import * as path from 'path';
+import * as fs from 'fs';
+import * as FlrConstant from '../FlrConstant';
 
 export class FlrCodeUtil {
   /*
@@ -60,13 +60,13 @@ export class FlrCodeUtil {
       /// - fileExtname：.png
       class AssetResource {
         /// Creates an object to hold the asset resource’s metadata.
-        const AssetResource(this.assetName, {this.packageName}) : assert(assetName != null);
+        const AssetResource(this.assetName, {this.packageName});
       
         /// The name of the main asset from the set of asset resources to choose from.
         final String assetName;
       
         /// The name of the package from which the asset resource is included.
-        final String packageName;
+        final String? packageName;
       
         /// The name used to generate the key to obtain the asset resource. For local assets
         /// this is [assetName], and for assets from packages the [assetName] is
@@ -121,19 +121,19 @@ export class FlrCodeUtil {
   public static generateAssetId(
     asset: string,
     usedAssetIdArray: string[],
-    priorAssetType: string = ".*"
+    priorAssetType: string = '.*'
   ): string {
     let fileExtName = path.extname(asset);
     let fileBasenameWithoutExtension = path.parse(asset).name;
 
     var assetId = fileBasenameWithoutExtension;
-    if (priorAssetType === ".*" || fileExtName !== priorAssetType) {
-      let extInfo = "_" + fileExtName.substring(1);
+    if (priorAssetType === '.*' || fileExtName !== priorAssetType) {
+      let extInfo = '_' + fileExtName.substring(1);
       assetId = fileBasenameWithoutExtension + extInfo;
     }
 
     // 过滤非法字符
-    assetId = assetId.replace(/[^a-zA-Z0-9_$]/g, "_");
+    assetId = assetId.replace(/[^a-zA-Z0-9_$]/g, '_');
 
     // 首字母转化为小写
     let capital = assetId.charAt(0).toLowerCase();
@@ -142,7 +142,7 @@ export class FlrCodeUtil {
     // 处理首字符异常情况
     let capitalRegex = /[0-9_$]/;
     if (capitalRegex.test(capital)) {
-      assetId = "a" + assetId;
+      assetId = 'a' + assetId;
     }
 
     // 处理 asset_id 重名的情况
@@ -190,20 +190,20 @@ export class FlrCodeUtil {
     asset: string,
     packageName: string
   ): string {
-    let packagesPrefix = "packages/" + packageName + "/";
+    let packagesPrefix = 'packages/' + packageName + '/';
     if (asset.startsWith(packagesPrefix)) {
       // asset: packages/flutter_r_demo/assets/images/test.png
       // to get assetName: assets/images/test.png
-      let assetName = asset.replace(packagesPrefix, "");
+      let assetName = asset.replace(packagesPrefix, '');
 
-      let assetComment = "asset: lib/" + assetName;
+      let assetComment = 'asset: lib/' + assetName;
       return assetComment;
     } else {
       // asset: assets/images/test.png
       // to get assetName: assets/images/test.png
       let assetName = asset;
 
-      let assetComment = "asset: " + assetName;
+      let assetComment = 'asset: ' + assetName;
       return assetComment;
     }
   }
@@ -216,19 +216,19 @@ export class FlrCodeUtil {
     assetIdDict: Map<string, string>,
     packageName: string,
     isPackageProjectType: boolean,
-    priorAssetType: string = ".*"
+    priorAssetType: string = '.*'
   ): string {
     let assetId = assetIdDict.get(asset);
     let assetComment = this.generateAssetComment(asset, packageName);
 
-    var assetName = "";
+    var assetName = '';
     var needPackage = false;
 
-    let packagesPrefix = "packages/" + packageName + "/";
+    let packagesPrefix = 'packages/' + packageName + '/';
     if (asset.startsWith(packagesPrefix)) {
       // asset: packages/flutter_r_demo/assets/images/test.png
       // to get assetName: assets/images/test.png
-      assetName = asset.replace(packagesPrefix, "");
+      assetName = asset.replace(packagesPrefix, '');
       needPackage = true;
     } else {
       // asset: assets/images/test.png
@@ -245,7 +245,7 @@ export class FlrCodeUtil {
     // 对字符串中的 '$' 进行转义处理：'$' -> '\$'
     // assetName: assets/images/test$.png
     // to get escapedAssetName: assets/images/test\$.png
-    let escapedAssetName = assetName.replace(/[$]/g, "\\$");
+    let escapedAssetName = assetName.replace(/[$]/g, '\\$');
 
     if (needPackage) {
       let code = `  /// ${assetComment}
@@ -271,10 +271,10 @@ export class FlrCodeUtil {
     packageName: string,
     isPackageProjectType: boolean
   ): string {
-    var all_g_AssetResource_property_code = "";
+    var all_g_AssetResource_property_code = '';
 
     nonSvgImageAssetArray.forEach((asset) => {
-      all_g_AssetResource_property_code += "\n";
+      all_g_AssetResource_property_code += '\n';
       let g_AssetResource_property_code = this.generate_AssetResource_property(
         asset,
         nonSvgImageAssetIdDict,
@@ -302,10 +302,10 @@ export class FlrCodeUtil {
     packageName: string,
     isPackageProjectType: boolean
   ): string {
-    var all_g_AssetResource_property_code = "";
+    var all_g_AssetResource_property_code = '';
 
     svgImageAssetArray.forEach((asset) => {
-      all_g_AssetResource_property_code += "\n";
+      all_g_AssetResource_property_code += '\n';
       let g_AssetResource_property_code = this.generate_AssetResource_property(
         asset,
         svgImageAssetIdDict,
@@ -333,10 +333,10 @@ export class FlrCodeUtil {
     packageName: string,
     isPackageProjectType: boolean
   ): string {
-    var all_g_AssetResource_property_code = "";
+    var all_g_AssetResource_property_code = '';
 
     textAssetArray.forEach((asset) => {
-      all_g_AssetResource_property_code += "\n";
+      all_g_AssetResource_property_code += '\n';
       let g_AssetResource_property_code = this.generate_AssetResource_property(
         asset,
         textAssetIdDict,
@@ -363,10 +363,10 @@ export class FlrCodeUtil {
     nonSvgImageAssetIdDict: Map<string, string>,
     packageName: string
   ): string {
-    var all_g_Asset_method_code = "";
+    var all_g_Asset_method_code = '';
 
     nonSvgImageAssetArray.forEach((asset) => {
-      all_g_Asset_method_code += "\n";
+      all_g_Asset_method_code += '\n';
 
       let assetId = nonSvgImageAssetIdDict.get(asset);
       let assetComment = this.generateAssetComment(asset, packageName);
@@ -399,17 +399,17 @@ export class FlrCodeUtil {
     svgImageAssetIdDict: Map<string, string>,
     packageName: string
   ): string {
-    var all_g_Asset_method_code = "";
+    var all_g_Asset_method_code = '';
 
     svgImageAssetArray.forEach((asset) => {
-      all_g_Asset_method_code += "\n";
+      all_g_Asset_method_code += '\n';
 
       let assetId = svgImageAssetIdDict.get(asset);
       let assetComment = this.generateAssetComment(asset, packageName);
 
       let g_Asset_method_code = `  /// ${assetComment}
       // ignore: non_constant_identifier_names
-      AssetSvg ${assetId}({@required double width, @required double height}) {
+      AssetSvg ${assetId}({required double width, required double height}) {
         final imageProvider = AssetSvg(asset.${assetId}.keyName, width: width, height: height);
         return imageProvider;
       }`;
@@ -436,10 +436,10 @@ export class FlrCodeUtil {
     textAssetIdDict: Map<string, string>,
     packageName: string
   ): string {
-    var all_g_Asset_method_code = "";
+    var all_g_Asset_method_code = '';
 
     textAssetArray.forEach((asset) => {
-      all_g_Asset_method_code += "\n";
+      all_g_Asset_method_code += '\n';
 
       let assetId = textAssetIdDict.get(asset);
       let assetComment = this.generateAssetComment(asset, packageName);
@@ -482,7 +482,7 @@ export class FlrCodeUtil {
     var fontFamilyId = fontFamilyName;
 
     // 过滤非法字符
-    fontFamilyId = fontFamilyId.replace(/[^a-zA-Z0-9_$]/g, "_");
+    fontFamilyId = fontFamilyId.replace(/[^a-zA-Z0-9_$]/g, '_');
 
     // 首字母转化为小写
     let capital = fontFamilyId.charAt(0).toLowerCase();
@@ -491,7 +491,7 @@ export class FlrCodeUtil {
     // 处理首字符异常情况
     let capitalRegex = /[0-9_$]/;
     if (capitalRegex.test(capital)) {
-      fontFamilyId = "a" + fontFamilyId;
+      fontFamilyId = 'a' + fontFamilyId;
     }
 
     return fontFamilyId;
@@ -504,12 +504,12 @@ export class FlrCodeUtil {
     fontFamilyConfigArray: Object[],
     packageName: string
   ): string {
-    var all_g_AssetResource_property_code = "";
+    var all_g_AssetResource_property_code = '';
 
     fontFamilyConfigArray.forEach((fontFamilyConfig: any) => {
-      all_g_AssetResource_property_code += "\n";
+      all_g_AssetResource_property_code += '\n';
 
-      let fontFamilyName = fontFamilyConfig["family"];
+      let fontFamilyName = fontFamilyConfig['family'];
       if (fontFamilyName === undefined) {
         return;
       }
