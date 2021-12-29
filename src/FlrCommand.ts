@@ -93,7 +93,10 @@ export class FlrCommand {
         //20012000
         let dartVersionV1 = 20000000 + 6000; // flutter verion v1.10.15 - dart 2.6.0
         let dartVersionV2 = 20000000 + 12000; // dart 2.12.0
-        if (dartVersion >= dartVersionV2) {
+        let dartVersionV15 = 20000000 + 15000; // dart 2.15.0
+        if (dartVersion >= dartVersionV15) {
+          ref = '0.4.1';
+        } else if (dartVersion >= dartVersionV2) {
           ref = '0.4.0-nullsafety.0';
         } else if (dartVersion >= dartVersionV1) {
           ref = '0.2.1';
