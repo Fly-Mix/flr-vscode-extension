@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as glob from "glob";
 import * as fs from "fs";
-import * as yaml from "js-yaml";
+import * as yaml from "yaml";
 import * as FlrConstant from "../FlrConstant";
 
 export class FlrFileUtil {
@@ -53,7 +53,7 @@ export class FlrFileUtil {
     try {
       let pubspecFilePath = this.getPubspecFilePath(flutterProjectRootDir);
       let fileContents = fs.readFileSync(pubspecFilePath, "utf8");
-      let data = yaml.safeLoad(fileContents);
+      let data = yaml.parse(fileContents);
       let flr = data["flr"];
       if (flr !== null && flr !== undefined) {
         let assets = flr["assets"];
@@ -82,7 +82,7 @@ export class FlrFileUtil {
         let subProjectRootDirname = path.basename(flutterProjectRootDir);
         pubspecFile = `${subProjectRootDirname}/${pubspecFile}`;
       }
-      if (e instanceof yaml.YAMLException) {
+      if (e instanceof yaml.YAMLError) {
         let msg = `${pubspecFile} is damaged with syntax error: \n ${e.message}`;
         vscode.window.showErrorMessage(msg);
       } else {
@@ -109,7 +109,7 @@ export class FlrFileUtil {
     try {
       let pubspecFilePath = this.getPubspecFilePath(flutterProjectRootDir);
       let fileContents = fs.readFileSync(pubspecFilePath, "utf8");
-      let data = yaml.safeLoad(fileContents);
+      let data = yaml.parse(fileContents);
       let flr = data["flr"];
       if (flr !== null && flr !== undefined) {
         let assets = flr["assets"];
@@ -130,7 +130,7 @@ export class FlrFileUtil {
         let subProjectRootDirname = path.basename(flutterProjectRootDir);
         pubspecFile = `${subProjectRootDirname}/${pubspecFile}`;
       }
-      if (e instanceof yaml.YAMLException) {
+      if (e instanceof yaml.YAMLError) {
         let msg = `${pubspecFile} is damaged with syntax error: \n ${e.message}`;
         vscode.window.showErrorMessage(msg);
       } else {
@@ -148,7 +148,7 @@ export class FlrFileUtil {
 
   public static loadPubspecConfigFromFile(pubspecFile: string): any {
     let fileContents = fs.readFileSync(pubspecFile, "utf8");
-    let pubspecConfig = yaml.safeLoad(fileContents);
+    let pubspecConfig = yaml.parse(fileContents);
     return pubspecConfig;
   }
 
@@ -159,7 +159,8 @@ export class FlrFileUtil {
     try {
       fs.writeFileSync(
         pubspecFile,
-        yaml.dump(pubspecConfig, {
+        yaml.stringify({
+          value: pubspecConfig,
           indent: 2,
           noArrayIndent: true,
           lineWidth: Infinity,
@@ -175,7 +176,7 @@ export class FlrFileUtil {
     try {
       let pubspecConfig = this.loadPubspecConfigFromFile(pubspecFile);
       this.dumpPubspecConfigToFile(pubspecConfig, pubspecFile);
-    } catch (_) {}
+    } catch (_) { }
   }
 
   /*
@@ -195,7 +196,7 @@ export class FlrFileUtil {
 
     if (fs.existsSync(metadataFilePath)) {
       let fileContents = fs.readFileSync(metadataFilePath, "utf8");
-      let metadataConfig = yaml.safeLoad(fileContents);
+      let metadataConfig = yaml.parse(fileContents);
 
       let projectType = metadataConfig["project_type"];
       if (projectType === "package" || projectType === "plugin") {

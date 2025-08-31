@@ -1,9 +1,22 @@
+## [3.3.0]
+
+- keep yaml comments when format
+
+## [3.2.0]
+
+- updade dependency
+
+## [3.1.0]
+
+- update for r_dart_library
+
 ## [3.0.0]
 
-- support null safety 
+- support null safety
 - new logic for check project dart version when init
 - Fix [issue#9](https://github.com/Fly-Mix/flr-vscode-extension/issues/9)
 - Fix [issue#8](https://github.com/Fly-Mix/flr-vscode-extension/issues/8)
+
 ## [2.1.3]
 
 - Fix [issue#4](https://github.com/Fly-Mix/flr-vscode-extension/issues/4)
@@ -12,7 +25,7 @@
 ## [2.1.2]
 
 - Improve robustness
-- Fix [r_dart_library](https://github.com/YK-Unit/r_dart_library) version logic 
+- Fix [r_dart_library](https://github.com/YK-Unit/r_dart_library) version logic
 
 ## [2.1.1]
 
@@ -24,7 +37,7 @@
 
 - Support for auto merging old asset specifications when specifying new assets
 
-   > This is can help you to auto keep the manually added asset specifications.
+  > This is can help you to auto keep the manually added asset specifications.
 
 ## [2.0.1]
 

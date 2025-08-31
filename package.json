@@ -4,7 +4,7 @@
   "displayName": "Flr",
   "description": "A Flutter Resource Manager VSCode Extension",
   "icon": "resources/flr-icon.png",
-  "version": "3.1.0",
+  "version": "3.3.0",
   "repository": "https://github.com/Fly-Mix/flr-vscode-extension",
   "license": "MIT",
   "engines": {
@@ -77,6 +77,7 @@
     "views": {
       "explorer": [
         {
+          "icon": "resources/flr-icon.png",
           "id": "flr",
           "name": "Flr(Assets Manager)",
           "when": "isPubspecYamlExist"
@@ -92,23 +93,23 @@
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
-    "@types/js-yaml": "^3.12.1",
     "@types/md5": "^2.1.33",
     "@types/mkdirp": "^0.5.2",
     "@types/mocha": "^5.2.7",
     "@types/node": "^12.11.7",
     "@types/rimraf": "^2.0.2",
     "@types/vscode": "^1.41.0",
+    "@types/yaml": "^1.9.6",
     "glob": "^7.1.5",
     "tslint": "^5.20.0",
-    "typescript": "^3.6.4",
+    "typescript": "^3.8.0",
     "vscode-test": "^1.2.2"
   },
   "dependencies": {
-    "js-yaml": "^3.12.1",
+    "glob": "^7.1.5",
     "md5": "^2.2.1",
     "mkdirp": "^0.5.1",
     "rimraf": "^2.0.2",
-    "glob": "^7.1.5"
+    "yaml": "^2.8.1"
   }
 }

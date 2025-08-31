@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import * as utils from "./utils";
-import * as yaml from "js-yaml";
+import * as yaml from "yaml";
 import * as flrPathMan from "./folder-manager";
 import * as md5 from "md5";
 import { FlrFileUtil } from "./util/FlrFileUtil";
@@ -117,7 +117,7 @@ export class FileExplorer {
                 curFlutterAndFlrConfigsMd5
               );
             }
-          } catch (_) {}
+          } catch (_) { }
           if (event === "change") {
             // compare md5 before and after, stop looping
             this.toggleMonitor(true);
@@ -228,7 +228,7 @@ export class FileExplorer {
       let fileContents = fs.readFileSync(filePath, "utf8");
       let fileMD5 = md5(fileContents);
       return fileMD5;
-    } catch (_) {}
+    } catch (_) { }
 
     return undefined;
   }
@@ -259,7 +259,7 @@ export class FileExplorer {
       let fileContents = `${flutterConfigJson}\n${flrConfigJson}`;
       let fileMD5 = md5(fileContents);
       return fileMD5;
-    } catch (_) {}
+    } catch (_) { }
 
     return undefined;
   }
@@ -293,7 +293,7 @@ export class FileExplorer {
         ) {
           this.flutterAndFlrConfigsMd5Map.set(key, curFlutterAndFlrConfigsMd5);
         }
-      } catch (_) {}
+      } catch (_) { }
     }
   }
 
@@ -344,7 +344,7 @@ export class FileSystemProvider
     private filter: (para: string) => boolean = () => {
       return true;
     }
-  ) {}
+  ) { }
   // tree data provider
 
   async getChildren(element?: flrPathMan.Entry): Promise<flrPathMan.Entry[]> {

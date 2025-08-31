@@ -5,7 +5,7 @@ import { FileExplorer } from "./flr-view-data-provider";
 import * as utils from "./utils";
 import * as FlrConstant from "./FlrConstant";
 import { FlrFileUtil } from "./util/FlrFileUtil";
-import * as yaml from "js-yaml";
+import * as yaml from "yaml";
 import { FlrCommand } from "./FlrCommand";
 
 export function activate(context: vscode.ExtensionContext) {
