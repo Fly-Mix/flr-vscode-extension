@@ -146,25 +146,21 @@ export class FlrFileUtil {
     return resourceDirResultTuple;
   }
 
-  public static loadPubspecConfigFromFile(pubspecFile: string): any {
+  public static loadPubspecConfigFromFile(pubspecFile: string): yaml.Document {
     let fileContents = fs.readFileSync(pubspecFile, "utf8");
-    let pubspecConfig = yaml.parse(fileContents);
+    let pubspecConfig = yaml.parseDocument(fileContents);
     return pubspecConfig;
   }
 
+
   public static dumpPubspecConfigToFile(
-    pubspecConfig: any,
+    pubspecConfig: yaml.Document,
     pubspecFile: string
   ) {
     try {
       fs.writeFileSync(
         pubspecFile,
-        yaml.stringify({
-          value: pubspecConfig,
-          indent: 2,
-          noArrayIndent: true,
-          lineWidth: Infinity,
-        }),
+        pubspecConfig.toString(),
         "utf8"
       );
     } catch (e) {
@@ -196,9 +192,9 @@ export class FlrFileUtil {
 
     if (fs.existsSync(metadataFilePath)) {
       let fileContents = fs.readFileSync(metadataFilePath, "utf8");
-      let metadataConfig = yaml.parse(fileContents);
+      let metadataConfig = yaml.parseDocument(fileContents);
 
-      let projectType = metadataConfig["project_type"];
+      let projectType = metadataConfig.get("project_type");
       if (projectType === "package" || projectType === "plugin") {
         return true;
       }

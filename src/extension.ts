@@ -11,8 +11,6 @@ import { FlrCommand } from "./FlrCommand";
 export function activate(context: vscode.ExtensionContext) {
   var fp: FileExplorer | undefined;
 
-  let filename = utils.Names.pubspec;
-
   function checkIsFlutterProject(): Promise<boolean> {
     return new Promise<boolean>((success, failure) => {
       let flutterProjectRootDir = FlrFileUtil.getFlutterMainProjectRootDir();

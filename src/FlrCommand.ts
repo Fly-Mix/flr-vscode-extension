@@ -8,6 +8,8 @@ import * as utils from './utils';
 import { FlrAssetUtil } from './util/FlrAssetUtil';
 import { FlrCodeUtil } from './util/FlrCodeUtil';
 import { exec } from 'child_process';
+import * as yaml from 'yaml';
+
 
 export class FlrCommand {
   public static async initAll() {
@@ -32,7 +34,7 @@ export class FlrCommand {
     });
 
     vscode.window.showInformationMessage(
-      `adds flr config for all flutter projects done`
+      `[FLR] All flutter projects init successfully`
     );
   }
 
@@ -45,60 +47,77 @@ export class FlrCommand {
 
     var pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(pubspecFile);
     var flrDartfmtLineLength = FlrConstant.DARTFMT_LINE_LENGTH;
-    var flrAssets = [];
-    var flrFonts = [];
-    if (pubspecConfig.hasOwnProperty('flr')) {
-      let oldFlrConfig = pubspecConfig['flr'];
+    var flrAssets: any[] = [];
+    var flrFonts: any[] = [];
+    let flrOld = pubspecConfig.get('flr');
+    if (flrOld === null || flrOld === undefined) {
+      let flr = pubspecConfig.createNode({
+        core_version: FlrConstant.CORE_VERSION,
+        dartfmt_line_length: flrDartfmtLineLength,
+        assets: flrAssets,
+        fonts: flrFonts,
+      });
+      pubspecConfig.set('flr', flr);
+    }
+    let flr = pubspecConfig.get('flr');
+    if (yaml.isMap(flr)) {
+      let oldFlrConfig = flr;
 
-      if (oldFlrConfig.hasOwnProperty('dartfmt_line_length')) {
-        flrDartfmtLineLength = oldFlrConfig['dartfmt_line_length'];
+      let dartfmt_line_length = oldFlrConfig.get('dartfmt_line_length');
+      if (dartfmt_line_length !== undefined && dartfmt_line_length !== null && typeof dartfmt_line_length === 'number') {
+        flrDartfmtLineLength = dartfmt_line_length;
+        oldFlrConfig.set('dartfmt_line_length', flrDartfmtLineLength);
       }
 
-      if (oldFlrConfig.hasOwnProperty('assets')) {
-        flrAssets = oldFlrConfig['assets'];
-      }
-
-      if (oldFlrConfig.hasOwnProperty('fonts')) {
-        flrFonts = oldFlrConfig['fonts'];
-      }
+      oldFlrConfig = await this.normalizeAssetsAndFontsValue(oldFlrConfig);
+      pubspecConfig.set('flr', oldFlrConfig);
     }
 
-    var flrConfig = {
-      core_version: FlrConstant.CORE_VERSION,
-      dartfmt_line_length: flrDartfmtLineLength,
-      assets: flrAssets,
-      fonts: flrFonts,
-    };
-    pubspecConfig['flr'] = flrConfig;
-
     var ref = '0.1.1';
-    var versionString = '';
-    let sdk = pubspecConfig['environment'].sdk as String;
-    console.log(sdk);
-    if (sdk !== undefined) {
-      let constraints = sdk.split(' ');
-      console.log(constraints);
-      if (constraints.length > 0) {
-        let atLeastVersion = constraints[0]
-          .replace('>=', '')
-          .replace('>', '')
-          .replace('=', '');
-        console.log(atLeastVersion);
-        let valus = atLeastVersion.split('.');
-        let dartVersion =
-          (parseInt(valus[0]) ?? 0) * 10000000 +
-          (parseInt(valus[1]) ?? 0) * 1000 +
-          (parseInt(valus[2]) ?? 0);
-        console.log(dartVersion);
+    let env = pubspecConfig.get('environment');
+    if (env !== undefined && env !== null && yaml.isMap(env)) {
+      let sdkRaw = env.get('sdk');
+      const sdk = `${sdkRaw}`;
+      if (sdk !== '') {
+        const value = sdk.replace('sdk:', '').trimLeft();
+        /// sdk: '>=2.15.0'
+        /// sdk: ^3.8.1
+        /// sdk: '>=2.15.0 <3.0.0'
+        let constraints = value.toString().replace('"', '').replace("'", "").split(' ');
+        const isRanged = constraints.length > 1;
+        let minimumVersion: number = -1;
+        if (isRanged) {
+          let atLeastVersion = constraints[0]
+            .replace('>=', '')
+            .replace('>', '')
+            .replace('=', '');
+          let valus = atLeastVersion.split('.');
+          let dartVersion =
+            (parseInt(valus[0]) ?? 0) * 10000000 + (parseInt(valus[1]) ?? 0) * 1000 + (parseInt(valus[2]) ?? 0);
+          minimumVersion = dartVersion;
+        } else {
+          /// sdk: '>=2.15.0'
+          /// sdk: ^3.8.1
+          let atLeastVersion = constraints[0]
+            .replace('>=', '')
+            .replace('>', '')
+            .replace('=', '')
+            .replace('^', '');
+          let valus = atLeastVersion.split('.');
+          let dartVersion = (parseInt(valus[0]) ?? 0) * 10000000 + (parseInt(valus[1]) ?? 0) * 1000 + (parseInt(valus[2]) ?? 0);
+          minimumVersion = dartVersion;
+        }
+
+
         //20012000
         let dartVersionV1 = 20000000 + 6000; // flutter verion v1.10.15 - dart 2.6.0
         let dartVersionV2 = 20000000 + 12000; // dart 2.12.0
         let dartVersionV15 = 20000000 + 15000; // dart 2.15.0
-        if (dartVersion >= dartVersionV15) {
+        if (minimumVersion >= dartVersionV15) {
           ref = '0.4.1';
-        } else if (dartVersion >= dartVersionV2) {
+        } else if (minimumVersion >= dartVersionV2) {
           ref = '0.4.0-nullsafety.0';
-        } else if (dartVersion >= dartVersionV1) {
+        } else if (minimumVersion >= dartVersionV1) {
           ref = '0.2.1';
         }
       }
@@ -111,9 +130,10 @@ export class FlrCommand {
       },
     };
 
-    var dependenciesConfig = pubspecConfig['dependencies'];
-    dependenciesConfig['r_dart_library'] = rDartLibraryConfig;
-    pubspecConfig['dependencies'] = dependenciesConfig;
+    var dependenciesConfig = pubspecConfig.get('dependencies');
+    if (dependenciesConfig !== undefined && dependenciesConfig !== null && yaml.isMap(dependenciesConfig)) {
+      dependenciesConfig.set('r_dart_library', rDartLibraryConfig);
+    }
 
     FlrFileUtil.dumpPubspecConfigToFile(pubspecConfig, pubspecFile);
 
@@ -143,7 +163,7 @@ export class FlrCommand {
 
     if (silent === false) {
       vscode.window.showInformationMessage(
-        `generate for all flutter projects done`
+        `[FLR] All flutter projects's resources are generated successfully`
       );
     }
   }
@@ -166,7 +186,10 @@ export class FlrCommand {
     }
 
     let pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(pubspecFile);
-    let packageName = pubspecConfig['name'];
+    let packageName: string = '';
+
+    const nameRaw = pubspecConfig.get('name');
+    packageName = `${nameRaw}`;
 
     let isPackageProjectType = FlrFileUtil.isPackageProjectType(
       flutterProjectRootDir
@@ -317,54 +340,63 @@ export class FlrCommand {
       vscode.window.showInformationMessage(tips);
     }
 
-    var flutterConfig = pubspecConfig['flutter'];
+    var flutterConfig = pubspecConfig.get('flutter');
     if (
       flutterConfig === undefined ||
-      flutterConfig === null ||
-      flutterConfig instanceof Object === false ||
-      Object.keys(flutterConfig).length === 0
+      flutterConfig === null
     ) {
-      flutterConfig = {};
+      flutterConfig = pubspecConfig.createNode({});
     }
+    if (yaml.isMap(flutterConfig)) {
+      var newAssetArray: string[] = new Array();
+      newAssetArray = newAssetArray.concat(imageAssetArray, textAssetArray);
 
-    var newAssetArray: string[] = new Array();
-    newAssetArray = newAssetArray.concat(imageAssetArray, textAssetArray);
+      var oldAssetArray: string[] = new Array();
+      let assets = flutterConfig.get('assets');
+      if (yaml.isSeq<string>(assets)) {
+        oldAssetArray = assets.items;
+      }
 
-    var oldAssetArray: string[] = new Array();
-    if (flutterConfig.hasOwnProperty('assets')) {
-      let assets = flutterConfig['assets'];
-      if (Array.isArray(assets)) {
-        oldAssetArray = assets;
+      let assetArray: string[] = FlrAssetUtil.mergeFlutterAssets(
+        flutterProjectRootDir,
+        packageName,
+        newAssetArray,
+        oldAssetArray
+      );
+      if (assetArray.length > 0) {
+        // flutterConfig.set('assets', assetArray);
+        let assetFolders: string[] = new Array();
+        for (const asset of assetArray) {
+          if (asset.startsWith('packages') == false) {
+            let assetFolder = path.dirname(asset);
+            const folder = `${assetFolder}/`;
+            if (!assetFolders.includes(folder)) {
+              assetFolders.push(folder);
+            }
+          } else {
+            assetFolders.push(asset);
+          }
+        }
+        flutterConfig.set('assets', assetFolders);
+      } else {
+        flutterConfig.delete('assets');
+      }
+
+      if (fontFamilyConfigArray.length > 0) {
+        flutterConfig.set('fonts', fontFamilyConfigArray);
+      } else {
+        flutterConfig.delete('fonts');
+      }
+      pubspecConfig.set('flutter', flutterConfig);
+
+      // update flr core_version
+      const flrConfig = pubspecConfig.get('flr');
+      if (yaml.isMap<string, unknown>(flrConfig)) {
+        flrConfig.set('core_version', FlrConstant.CORE_VERSION);
+        const map = await this.normalizeAssetsAndFontsValue(flrConfig);
+        pubspecConfig.set('flr', map);
       }
     }
-
-    let assetArray: string[] = FlrAssetUtil.mergeFlutterAssets(
-      flutterProjectRootDir,
-      packageName,
-      newAssetArray,
-      oldAssetArray
-    );
-    if (assetArray.length > 0) {
-      flutterConfig['assets'] = assetArray;
-    } else {
-      delete flutterConfig['assets'];
-    }
-
-    if (fontFamilyConfigArray.length > 0) {
-      flutterConfig['fonts'] = fontFamilyConfigArray;
-    } else {
-      delete flutterConfig['fonts'];
-    }
-
-    pubspecConfig['flutter'] = flutterConfig;
-
-    // update flr core_version
-    var flrConfig = pubspecConfig['flr'];
-    if (flrConfig instanceof Object) {
-      flrConfig['core_version'] = FlrConstant.CORE_VERSION;
-      pubspecConfig['flr'] = flrConfig;
-    }
-
     FlrFileUtil.dumpPubspecConfigToFile(pubspecConfig, pubspecFile);
 
     var nonSvgImageAssetIdDict: Map<string, string> = new Map();
@@ -476,7 +508,14 @@ export class FlrCommand {
     fs.writeFileSync(rDartFilePath, r_dart_file_content);
 
     /// read line length settings for dart and format
-    var dartfmtLineLength = pubspecConfig['flr']['dartfmt_line_length'];
+    let flr = pubspecConfig.get('flr');
+    let dartfmtLineLength = 80;
+    if (yaml.isMap(flr)) {
+      const len = flr.get('dartfmt_line_length');
+      if (len !== null && len !== undefined && typeof len === 'number') {
+        dartfmtLineLength = len;
+      }
+    }
     if (dartfmtLineLength === null || dartfmtLineLength === undefined) {
       let platform = process.platform;
       var settingFilePath = '';
@@ -505,7 +544,7 @@ export class FlrCommand {
       dartfmtLineLength = FlrConstant.DARTFMT_LINE_LENGTH;
     }
 
-    this.execute(`flutter format -l ${dartfmtLineLength} ${rDartFilePath}`);
+    this.execute(`dart format -l ${dartfmtLineLength} ${rDartFilePath}`);
   }
 
   private static async execute(command: string): Promise<string> {
@@ -518,5 +557,67 @@ export class FlrCommand {
         }
       });
     });
+  }
+
+  private static async normalizeAssetsAndFontsValue(flrConfig: yaml.YAMLMap): Promise<yaml.YAMLMap> {
+    const validExtension = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'icon', 'bmp', 'wbmp', 'svg', 'txt', 'json', 'yaml', 'xml', 'ttf', 'otf', 'ttc'];
+    let assets = flrConfig.get('assets');
+    if (assets !== undefined && assets !== null && yaml.isSeq(assets)) {
+      let items: string[] = [];
+      for (let i = 0; i < assets.items.length; i++) {
+        let item = `${assets.items[i]}`;
+        if (typeof item === 'string') {
+          if (item.endsWith('/') === true) {
+            items.push(item);
+          } else {
+            let isValid = false;
+            for (let j = 0; j < validExtension.length; j++) {
+              let extension = validExtension[j];
+              if (item.endsWith(extension)) {
+                items.push(item);
+                isValid = true;
+                break;
+              }
+            }
+            if (isValid === false) {
+              items.push(item + '/');
+            }
+          }
+        } else {
+          vscode.window.showInformationMessage('Invalid asset item: ' + item);
+        }
+      }
+      flrConfig.set('assets', items);
+    }
+
+    let fonts = flrConfig.get('fonts');
+    if (fonts !== undefined && fonts !== null && yaml.isSeq(fonts)) {
+      let items: string[] = [];
+      for (let i = 0; i < fonts.items.length; i++) {
+        let item = `${fonts.items[i]}`;
+        if (typeof item === 'string') {
+          if (item.endsWith('/') === true) {
+            items.push(item);
+          } else {
+            let isValid = false;
+            for (let j = 0; j < validExtension.length; j++) {
+              let extension = validExtension[j];
+              if (item.endsWith(extension)) {
+                items.push(item);
+                isValid = true;
+                break;
+              }
+            }
+            if (isValid === false) {
+              items.push(item + '/');
+            }
+          }
+        } else {
+          vscode.window.showInformationMessage('Invalid font item: ' + item);
+        }
+      }
+      flrConfig.set('fonts', items);
+    }
+    return flrConfig;
   }
 }

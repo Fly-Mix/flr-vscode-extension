@@ -246,14 +246,14 @@ export class FileExplorer {
       var flutterConfigJson = "{}";
       var flrConfigJson = "{}";
 
-      if (pubspecConfig.hasOwnProperty("flutter")) {
-        let flutterConfig = pubspecConfig["flutter"];
-        flutterConfigJson = JSON.stringify(flutterConfig);
+      let flutterConfig = pubspecConfig.get("flutter");
+      if (flutterConfig !== undefined && flutterConfig !== null && yaml.isMap(flutterConfig)) {
+        flutterConfigJson = flutterConfig.toString();
       }
 
-      if (pubspecConfig.hasOwnProperty("flr")) {
-        let flrConfig = pubspecConfig["flr"];
-        flrConfigJson = JSON.stringify(flrConfig);
+      let flrConfig = pubspecConfig.get("flr");
+      if (flrConfig !== undefined && flrConfig !== null && yaml.isMap(flrConfig)) {
+        flrConfigJson = flrConfig.toString();
       }
 
       let fileContents = `${flutterConfigJson}\n${flrConfigJson}`;

@@ -1,3 +1,11 @@
+## [3.3.2]
+
+- keep yaml comments when format
+
+## [3.3.1]
+
+- rollback to 3.2.0
+
 ## [3.3.0]
 
 - keep yaml comments when format

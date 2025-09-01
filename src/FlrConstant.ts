@@ -2,7 +2,7 @@
 export let VERSION = '3.0.0';
 
 // 核心逻辑版本号
-export let CORE_VERSION = '3.1.0';
+export let CORE_VERSION = '3.3.2';
 
 // Flr支持的非SVG类图片文件类型
 export let NON_SVG_IMAGE_FILE_TYPES = [
