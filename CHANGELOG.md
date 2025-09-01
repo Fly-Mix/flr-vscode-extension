@@ -1,3 +1,7 @@
+## [3.3.3]
+
+- support dart 3.0.0
+
 ## [3.3.2]
 
 - keep yaml comments when format
