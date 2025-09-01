@@ -13,7 +13,8 @@ export class FlrCodeUtil {
 // - https://github.com/Fly-Mix/flr-vscode-extension
 // - https://github.com/Fly-Mix/flr-as-plugin
 //
-// ignore_for_file: unused_import, depend_on_referenced_packages
+
+// ignore_for_file: unused_import, depend_on_referenced_packages, camel_case_types, non_constant_identifier_names
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart' show rootBundle;

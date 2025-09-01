@@ -110,22 +110,26 @@ export class FlrCommand {
 
 
         //20012000
-        let dartVersionV1 = 20000000 + 6000; // flutter verion v1.10.15 - dart 2.6.0
-        let dartVersionV2 = 20000000 + 12000; // dart 2.12.0
-        let dartVersionV15 = 20000000 + 15000; // dart 2.15.0
-        if (minimumVersion >= dartVersionV15) {
-          ref = '0.4.1';
-        } else if (minimumVersion >= dartVersionV2) {
-          ref = '0.4.0-nullsafety.0';
-        } else if (minimumVersion >= dartVersionV1) {
-          ref = '0.2.1';
-        }
+        const dartVersionV1 = 20000000 + 6000; // flutter verion v1.10.15 - dart 2.6.0
+        const dartVersionV2 = 20000000 + 12000; // dart 2.12.0
+        const dartVersionV15 = 20000000 + 15000; // dart 2.15.0
+        const dartVersionV30 = 30000000; // dart 3.0.0
+        if (minimumVersion >= dartVersionV30) {
+          ref = '1.0.0';
+        } else
+          if (minimumVersion >= dartVersionV15) {
+            ref = '0.4.1';
+          } else if (minimumVersion >= dartVersionV2) {
+            ref = '0.4.0-nullsafety.0';
+          } else if (minimumVersion >= dartVersionV1) {
+            ref = '0.2.1';
+          }
       }
     }
 
     let rDartLibraryConfig = {
       git: {
-        url: 'https://github.com/YK-Unit/r_dart_library.git',
+        url: 'https://github.com/CodeEagle/r_dart_library.git',
         ref: ref,
       },
     };
