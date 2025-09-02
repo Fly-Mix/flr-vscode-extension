@@ -1,4 +1,8 @@
-## [3.3.3]
+## [3.3.4]
+
+- fix error
+
+[3.3.3]
 
 - support dart 3.0.0
 
@@ -46,7 +50,6 @@
 ## [2.1.0]
 
 - Support for processing (init/generate/monitor) multi projects (the main project and its sub projects in one workspace)
-
 - Support for auto merging old asset specifications when specifying new assets
 
   > This is can help you to auto keep the manually added asset specifications.

@@ -370,15 +370,15 @@ export class FlrCommand {
       if (assetArray.length > 0) {
         // flutterConfig.set('assets', assetArray);
         let assetFolders: string[] = new Array();
-        for (const asset of assetArray) {
-          if (asset.startsWith('packages') == false) {
-            let assetFolder = path.dirname(asset);
+        for (const arAsset of assetArray) {
+          if (arAsset.startsWith('packages') == false) {
+            let assetFolder = path.dirname(arAsset);
             const folder = `${assetFolder}/`;
             if (!assetFolders.includes(folder)) {
               assetFolders.push(folder);
             }
           } else {
-            assetFolders.push(asset);
+            assetFolders.push(arAsset);
           }
         }
         flutterConfig.set('assets', assetFolders);

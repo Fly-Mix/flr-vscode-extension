@@ -184,21 +184,21 @@ class AssetResource {
    *
    * */
   public static generateAssetComment(
-    asset: string,
+    commentAsset: string,
     packageName: string
   ): string {
     let packagesPrefix = 'packages/' + packageName + '/';
-    if (asset.startsWith(packagesPrefix)) {
+    if (commentAsset.startsWith(packagesPrefix)) {
       // asset: packages/flutter_r_demo/assets/images/test.png
       // to get assetName: assets/images/test.png
-      let assetName = asset.replace(packagesPrefix, '');
+      let assetName = commentAsset.replace(packagesPrefix, '');
 
       let assetComment = 'asset: lib/' + assetName;
       return assetComment;
     } else {
       // asset: assets/images/test.png
       // to get assetName: assets/images/test.png
-      let assetName = asset;
+      let assetName = commentAsset;
 
       let assetComment = 'asset: ' + assetName;
       return assetComment;
@@ -209,28 +209,28 @@ class AssetResource {
    * 为当前 asset 生成 AssetResource property 的代码
    * */
   public static generate_AssetResource_property(
-    asset: string,
+    propertyAsset: string,
     assetIdDict: Map<string, string>,
     packageName: string,
     isPackageProjectType: boolean,
     priorAssetType: string = '.*'
   ): string {
-    let assetId = assetIdDict.get(asset);
-    let assetComment = this.generateAssetComment(asset, packageName);
+    let assetId = assetIdDict.get(propertyAsset);
+    let assetComment = this.generateAssetComment(propertyAsset, packageName);
 
     var assetName = '';
     var needPackage = false;
 
     let packagesPrefix = 'packages/' + packageName + '/';
-    if (asset.startsWith(packagesPrefix)) {
+    if (propertyAsset.startsWith(packagesPrefix)) {
       // asset: packages/flutter_r_demo/assets/images/test.png
       // to get assetName: assets/images/test.png
-      assetName = asset.replace(packagesPrefix, '');
+      assetName = propertyAsset.replace(packagesPrefix, '');
       needPackage = true;
     } else {
       // asset: assets/images/test.png
       // to get assetName: assets/images/test.png
-      assetName = asset;
+      assetName = propertyAsset;
 
       if (isPackageProjectType) {
         needPackage = true;

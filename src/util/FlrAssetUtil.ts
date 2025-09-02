@@ -65,9 +65,9 @@ export class FlrAssetUtil {
    * @return false
    *
    * */
-  public static isPackageAsset(asset: string): boolean {
+  public static isPackageAsset(pkAsset: string): boolean {
     let packagePrefix = "packages/";
-    if (asset.startsWith(packagePrefix)) {
+    if (pkAsset !== null && pkAsset !== undefined && typeof pkAsset === 'string' && pkAsset.startsWith(packagePrefix)) {
       return true;
     }
 
@@ -89,10 +89,10 @@ export class FlrAssetUtil {
    * */
   public static isSpecifiedPackageAsset(
     packageName: string,
-    asset: string
+    packageAsset: string
   ): boolean {
     let specifiedPackagePrefix = "packages/" + packageName + "/";
-    if (asset.startsWith(specifiedPackagePrefix)) {
+    if (packageAsset !== null && packageAsset !== undefined && typeof packageAsset === 'string' && packageAsset.startsWith(specifiedPackagePrefix)) {
       return true;
     }
     return false;

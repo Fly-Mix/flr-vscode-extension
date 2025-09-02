@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es6",
     "outDir": "out",
-    "lib": ["es6"],
+    "target": "es5", // keep your target as es5 (for Electron / VS‑Code)
+    "lib": ["es2015"], // add es2015 for natural IntelliSense
     "sourceMap": true,
     "rootDir": "src",
     "strict": true /* enable all strict type-checking options */
