@@ -311,6 +311,47 @@ export class FlrFileUtil {
   }
 
   /*
+   * 扫描指定的资源目录和其所有层级的子目录，查找所有未被识别类型的文件
+   * 返回文件结果二元组 otherFileResultTuple
+   * otherFileResultTuple = [legalOtherFileArray, illegalOtherFileArray]
+   *
+   * 未被识别的文件是指：不属于图片、文本、字体类型的文件
+   *
+   * === Examples
+   * resourceDir = "~/path/to/flutter_project/lib/assets/raw"
+   * legalOtherFileArray = ["~/path/to/flutter_project/lib/assets/raw/animation.lottie"]
+   * illegalOtherFileArray = ["~/path/to/flutter_project/lib/assets/raw/~.mp3"]
+   * */
+  public static findOtherFiles(resourceDir: string): [string[], string[]] {
+    var legalOtherFileArray: string[] = new Array();
+    var illegalOtherFileArray: string[] = new Array();
+
+    let regx = `${resourceDir}/**/*.*`;
+    let files = glob.sync(regx);
+
+    const knownFileTypes = [
+      ...FlrConstant.IMAGE_FILE_TYPES,
+      ...FlrConstant.TEXT_FILE_TYPES,
+      ...FlrConstant.FONT_FILE_TYPES,
+    ];
+
+    files.forEach((file) => {
+      let fileExtName = path.extname(file).toLowerCase();
+      if (knownFileTypes.includes(fileExtName)) {
+        return;
+      }
+
+      if (this.isLegalResourceFile(file)) {
+        legalOtherFileArray.push(file);
+      } else {
+        illegalOtherFileArray.push(file);
+      }
+    });
+
+    return [legalOtherFileArray, illegalOtherFileArray];
+  }
+
+  /*
    * 扫描指定的资源目录，返回其所有第一级子目录
    *
    * === Examples

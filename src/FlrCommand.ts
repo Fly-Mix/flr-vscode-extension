@@ -255,6 +255,28 @@ export class FlrCommand {
     textAssetArray = Array.from(new Set(textAssetArray));
     textAssetArray.sort();
 
+    var otherAssetArray: string[] = new Array();
+    var illegalOtherFileArray: string[] = new Array();
+    for (const index in assetsResourceDirs) {
+      let resourceDir = assetsResourceDirs[index];
+      let otherFileResultTuple = FlrFileUtil.findOtherFiles(resourceDir);
+      let legalOtherFileSubArray = otherFileResultTuple[0];
+      let illegalOtherFileSubArray = otherFileResultTuple[1];
+
+      illegalOtherFileArray = illegalOtherFileArray.concat(
+        illegalOtherFileSubArray
+      );
+
+      let otherAssetSubArray = FlrAssetUtil.generateImageAssets(
+        flutterProjectRootDir,
+        packageName,
+        legalOtherFileSubArray
+      );
+      otherAssetArray = otherAssetArray.concat(otherAssetSubArray);
+    }
+    otherAssetArray = Array.from(new Set(otherAssetArray));
+    otherAssetArray.sort();
+
     var fontFamilyConfigArray: Object[] = new Array();
     var illegalFontFileArray: string[] = new Array();
     for (const index in fontsResourceDirs) {
@@ -327,6 +349,7 @@ export class FlrCommand {
     illegalResourceFileArray = illegalResourceFileArray.concat(
       illegalImageFileArray,
       illegalTextFileArray,
+      illegalOtherFileArray,
       illegalFontFileArray
     );
 
@@ -353,7 +376,7 @@ export class FlrCommand {
     }
     if (yaml.isMap(flutterConfig)) {
       var newAssetArray: string[] = new Array();
-      newAssetArray = newAssetArray.concat(imageAssetArray, textAssetArray);
+      newAssetArray = newAssetArray.concat(imageAssetArray, textAssetArray, otherAssetArray);
 
       var oldAssetArray: string[] = new Array();
       let assets = flutterConfig.get('assets');
@@ -378,9 +401,26 @@ export class FlrCommand {
               assetFolders.push(folder);
             }
           } else {
-            assetFolders.push(arAsset);
+            if (!assetFolders.includes(arAsset)) {
+              assetFolders.push(arAsset);
+            }
           }
         }
+        const variantDirRegex = /^((0\.[0-9]+)|([1-9]+[0-9]*(\.[0-9]+)?))[x]$/;
+        assetFolders = assetFolders.filter((folder) => {
+          let segments = folder.replace(/\/$/, '').split('/');
+          return !segments.some(segment => variantDirRegex.test(segment));
+        });
+        assetFolders = assetFolders.map((folder) => {
+          if (folder.endsWith('/')) {
+            return folder;
+          }
+          let ext = path.extname(folder);
+          if (ext.length > 1 && /^[a-zA-Z]/.test(ext.slice(1))) {
+            return folder;
+          }
+          return `${folder}/`;
+        });
         flutterConfig.set('assets', assetFolders);
       } else {
         flutterConfig.delete('assets');
@@ -564,7 +604,6 @@ export class FlrCommand {
   }
 
   private static async normalizeAssetsAndFontsValue(flrConfig: yaml.YAMLMap): Promise<yaml.YAMLMap> {
-    const validExtension = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'icon', 'bmp', 'wbmp', 'svg', 'txt', 'json', 'yaml', 'xml', 'ttf', 'otf', 'ttc'];
     let assets = flrConfig.get('assets');
     if (assets !== undefined && assets !== null && yaml.isSeq(assets)) {
       let items: string[] = [];
@@ -574,16 +613,10 @@ export class FlrCommand {
           if (item.endsWith('/') === true) {
             items.push(item);
           } else {
-            let isValid = false;
-            for (let j = 0; j < validExtension.length; j++) {
-              let extension = validExtension[j];
-              if (item.endsWith(extension)) {
-                items.push(item);
-                isValid = true;
-                break;
-              }
-            }
-            if (isValid === false) {
+            let basename = path.basename(item);
+            if (basename.includes('.')) {
+              items.push(item);
+            } else {
               items.push(item + '/');
             }
           }
@@ -603,16 +636,10 @@ export class FlrCommand {
           if (item.endsWith('/') === true) {
             items.push(item);
           } else {
-            let isValid = false;
-            for (let j = 0; j < validExtension.length; j++) {
-              let extension = validExtension[j];
-              if (item.endsWith(extension)) {
-                items.push(item);
-                isValid = true;
-                break;
-              }
-            }
-            if (isValid === false) {
+            let basename = path.basename(item);
+            if (basename.includes('.')) {
+              items.push(item);
+            } else {
               items.push(item + '/');
             }
           }

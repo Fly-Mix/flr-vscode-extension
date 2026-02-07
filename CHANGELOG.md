@@ -1,3 +1,10 @@
+## [3.4.0]
+
+- feat: Support recognizing and processing more resource file types (e.g., .lottie, .mp3, and other non-standard types)
+- feat: Add automatic filtering for variant directories (e.g., 2.0x/, 3.0x/ and other scale factor directories)
+- refactor: Simplify resource path normalization logic for better code maintainability
+- fix: Fix array deduplication issue in assetFolders
+
 ## [3.3.4]
 
 - fix error
