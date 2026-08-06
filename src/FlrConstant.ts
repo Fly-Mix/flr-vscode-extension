@@ -1,5 +1,5 @@
 // 工具版本号
-export let VERSION = '3.0.0';
+export let VERSION = '3.4.1';
 
 // 核心逻辑版本号
 export let CORE_VERSION = '3.3.4';

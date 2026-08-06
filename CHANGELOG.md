@@ -1,3 +1,9 @@
+## [3.4.1]
+
+- fix: Normalize YAML asset nodes before merging existing Flutter assets.
+- fix: Preserve existing directory asset paths while regenerating resources.
+- test: Cover comment retention and mixed generated/manual assets.
+
 ## [3.4.0]
 
 - feat: Support recognizing and processing more resource file types (e.g., .lottie, .mp3, and other non-standard types)
