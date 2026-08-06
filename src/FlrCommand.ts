@@ -380,8 +380,8 @@ export class FlrCommand {
 
       var oldAssetArray: string[] = new Array();
       let assets = flutterConfig.get('assets');
-      if (yaml.isSeq<string>(assets)) {
-        oldAssetArray = assets.items;
+      if (yaml.isSeq(assets)) {
+        oldAssetArray = assets.items.map((item) => `${item}`);
       }
 
       let assetArray: string[] = FlrAssetUtil.mergeFlutterAssets(
@@ -395,8 +395,9 @@ export class FlrCommand {
         let assetFolders: string[] = new Array();
         for (const arAsset of assetArray) {
           if (arAsset.startsWith('packages') == false) {
-            let assetFolder = path.dirname(arAsset);
-            const folder = `${assetFolder}/`;
+            const folder = arAsset.endsWith('/')
+              ? arAsset
+              : `${path.dirname(arAsset)}/`;
             if (!assetFolders.includes(folder)) {
               assetFolders.push(folder);
             }
